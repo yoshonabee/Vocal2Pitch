@@ -1,0 +1,9 @@
+*.m4a
+*.wav
+*.mp3
+*.mp4
+*.pkl
+*.obj
+
+*ipython_checkpoints
+data/
