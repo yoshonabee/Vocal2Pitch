@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from argparse import ArgumentParser
+from time import sleep
 
 from tqdm import tqdm
 
@@ -25,14 +26,21 @@ def main(opt):
 
         video_list.set_description(f"Downloading {video_dir.name}")
 
-        txt_file = (video_dir / f"{video_dir.name}.txt")
-        video_link = txt_file.read_text()
+        txt_file = (video_dir / f"{video_dir.name}_link.txt")
+        video_link = txt_file.read_text().strip()
         video_id = video_link[-11:]
 
         if opt.cover or not (output_dir / f"{video_id}.m4a").exists():
-            command = f"youtube-dl -f 'bestaudio[ext=m4a]' {video_link} -o '{(output_dir / '%(id)s.%(ext)s')}' > /dev/null"
-            os.system(command)
+            try:
+                command = f"youtube-dl -f 'bestaudio[ext=m4a]' {video_link} -o '{output_dir / '%(id)s.%(ext)s'}' > /dev/null"
+                os.system(command)
+                sleep(0.5)
+            except KeyboardInterrupt as e:
+                video_list.close()
+                break
 
+
+    # remove part files generated while downloading
     for trash in output_dir.glob("*.part"):
         os.remove(trash)
 

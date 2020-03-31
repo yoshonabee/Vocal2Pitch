@@ -5,5 +5,7 @@
 *.pkl
 *.obj
 
+*__pycache__
 *ipython_checkpoints
+
 data/
