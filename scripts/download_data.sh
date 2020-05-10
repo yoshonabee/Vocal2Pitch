@@ -1,1 +1,1 @@
-python3 lib/utils/download.py data/singingTranscription
+python3 src/utils/download.py data/singingTranscription

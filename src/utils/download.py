@@ -15,13 +15,16 @@ def get_args():
 def main(opt):
     root_dir = Path(opt.data_dir)
     output_dir = root_dir / "audios"
-    if not output_dir.exists():
-        output_dir.mkdir()
+    
+    try:
+        output_dir.mkdir(parents=True)
+    except FileExistsError as e:
+        print("Output dir already exists")
 
     video_list = tqdm(sorted(root_dir.glob("*")), unit="videos")
 
     for video_dir in video_list:
-        if not video_dir.is_dir() or video_dir.name == "audios":
+        if not video_dir.is_dir() or not (video_dir / f"{video_dir.name}.txt").exists():
             continue
 
         video_list.set_description(f"Downloading {video_dir.name}")
@@ -30,11 +33,11 @@ def main(opt):
         video_link = txt_file.read_text().strip()
         video_id = video_link[-11:]
 
-        if opt.cover or not (output_dir / f"{video_id}.m4a").exists():
+        if opt.cover or not (output_dir / f"{video_dir.name}.{video_id}.m4a").exists():
             try:
-                command = f"youtube-dl -f 'bestaudio[ext=m4a]' {video_link} -o '{output_dir / '%(id)s.%(ext)s'}' > /dev/null"
+                command = f"youtube-dl -f 'bestaudio[ext=m4a]' {video_link} -o '{output_dir / f'{video_dir.name}.%(id)s.%(ext)s'}' > /dev/null"
                 os.system(command)
-                sleep(0.5)
+                sleep(0.3)
             except KeyboardInterrupt as e:
                 video_list.close()
                 break
