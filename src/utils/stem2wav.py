@@ -12,13 +12,14 @@ VOCAL_INDEX = 4
 def get_args():
     parser = ArgumentParser()
     parser.add_argument("musdb_dir")
+    parser.add_argument("output_dir")
     parser.add_argument("--sample_rate", default=16000, type=int)
-    parser.add_argument("--output_dir", type=str)
+
 
     return parser.parse_args()
 
 def extract_wav_from_stem(stem, output_path, i, sr=16000):
-    command = ["ffmpeg", "-loglevel", "panic", "-i", stem, "-map", f"0:{i}", "-vn", "-y", "-ac", 1, "-ar", f"{sr}", output_path]
+    command = ["ffmpeg", "-loglevel", "panic", "-i", stem, "-map", f"0:{i}", "-vn", "-y", "-ac", "1", "-ar", f"{sr}", output_path]
     subprocess.run(command)
 
 def extract_accompaniment(mixture, vocal, output_path, sr):
@@ -43,8 +44,8 @@ def main(args):
         stem_list = [stem for stem in (musdb_dir / split).glob("*.stem.mp4")]
         with tqdm(stem_list, unit="audio") as t:
             for stem in t:
-                name = ".".join(stem.name.splie('.')[:-2])
-                stem_dir = musdb_dir / split / name
+                name = ".".join(stem.name.split('.')[:-2])
+                stem_dir = output_dir / split / name
 
                 stem_dir.mkdir(parents=True, exist_ok=True)
 

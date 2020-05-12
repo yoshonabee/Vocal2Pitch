@@ -25,26 +25,28 @@ def main(args: dict) -> None:
 
 		data_dict = {}
 
-		stem_dir_list = [stem_dir if stem_dir.is_dir() for stem_dir in (data_dir / split).glob("*")]
+		stem_dir_list = [stem_dir for stem_dir in (data_dir / split).glob("*") if stem_dir.is_dir()]
 		with tqdm(stem_dir_list, unit="audio") as t:
 			for stem_dir in t:
 				t.set_description(stem_dir.name)
 
-				mixture_path = stem_dir / "mixture.wav"
-				vocal_path = stem_dir / "vocal.wav"
-				accompaniment_path = stem_dir / "accompaniment.wav"
+				mixture_path = (stem_dir / "mixture.wav").absolute()
+				vocal_path = (stem_dir / "vocal.wav").absolute()
+				accompaniment_path = (stem_dir / "accompaniment.wav").absolute()
 
-				si, _ = torchaudio.info(mixture_path)
+				si, _ = torchaudio.info(str(mixture_path))
 				audio_length = si.length
 
+				assert audio_length == torchaudio.info(str(vocal_path))[0].length and audio_length == torchaudio.info(str(accompaniment_path))[0].length
+
 				data_dict[stem_dir.name] = {
-					"mixture": mixture_path,
-					"vocal": vocal_path,
-					"accompaniment.wav": accompaniment_path,
+					"mixture": str(mixture_path),
+					"vocal": str(vocal_path),
+					"accompaniment": str(accompaniment_path),
 					"length": audio_length,
 				}
 
-		json.dump(data_dict, open(output_dir / f"{split}.json", "w"))
+		json.dump(data_dict, (output_dir / f"{split}.json").open("w"))
 
 if __name__ == '__main__':
 	args = get_args()
