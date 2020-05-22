@@ -2,6 +2,8 @@ from argparse import ArgumentParser
 from pathlib import Path
 import subprocess
 
+from multiprocessing import Pool
+
 import librosa
 
 from tqdm import tqdm
@@ -22,7 +24,7 @@ def get_args():
 def transform_to_wav(input):
     audio, output_path, sr = input
     try:
-        command = ["ffmpeg", "-loglevel", "panic", "-i", input, "-y", "-ac", "1", "-ar", f"{sr}", "-f", "wav", output_path]
+        command = ["ffmpeg", "-loglevel", "panic", "-i", audio, "-y", "-ac", "1", "-ar", f"{sr}", "-f", "wav", output_path]
         subprocess.run(command)
 
         return True
@@ -42,11 +44,8 @@ def main(args):
     output_dir.mkdir(parents=True, exist_ok=True)
 
     audio_list = [
-        (
-            audio,
-            output_dir / f"{audio.name.split(".")[0]}.wav",
-            args.sample_rate
-        ) for audio in (audio_dir / split).glob("*.m4a")
+        [audio, output_dir / f"{audio.name.split('.')[0]}.wav", args.sample_rate]
+        for audio in audio_dir.glob("*.m4a")
     ]
 
     p = Pool(args.concurrency)
