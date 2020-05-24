@@ -2,6 +2,8 @@ from argparse import ArgumentParser
 from pathlib import Path
 import subprocess
 
+from multiprocessing import Pool
+
 import librosa
 
 from tqdm import tqdm
@@ -11,9 +13,8 @@ VOCAL_INDEX = 4
 
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument("audio_dir")
-    parser.add_argument("output_dir")
-    parser.add_argument("--sample_rate", default=44100, type=int)
+    parser.add_argument("data_dir")
+    parser.add_argument("--sample_rate", default=16000, type=int)
     parser.add_argument("--concurrency", type=int, default=5)
 
 
@@ -22,7 +23,7 @@ def get_args():
 def transform_to_wav(input):
     audio, output_path, sr = input
     try:
-        command = ["ffmpeg", "-loglevel", "panic", "-i", input, "-y", "-ac", "1", "-ar", f"{sr}", "-f", "wav", output_path]
+        command = ["ffmpeg", "-loglevel", "panic", "-i", audio, "-y", "-ac", "1", "-ar", f"{sr}", "-f", "wav", output_path]
         subprocess.run(command)
 
         return True
@@ -30,24 +31,25 @@ def transform_to_wav(input):
         print(e)
         return False
 
-
-
 def main(args):
-    audio_dir = Path(args.audio_dir)
+    data_dir = Path(args.data_dir)
 
-    if not audio_dir.is_dir():
+    if not data_dir.is_dir():
         raise ValueError("Please input valid audio dir")
-
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
 
     audio_list = [
         (
             audio,
-            output_dir / f"{audio.name.split(".")[0]}.wav",
+            audio_dir / f"{audio_dir.name}.wav",
             args.sample_rate
-        ) for audio in (audio_dir / split).glob("*.m4a")
+        ) 
+        for audio_dir in data_dir.glob("*")
+        for audio in audio_dir.glob(f"{audio_dir.name}.*")
+        if audio_dir.name.isdigit() and not (audio_dir / f"{audio_dir.name}.wav").exists()
     ]
+
+    from IPython import embed
+    embed()
 
     p = Pool(args.concurrency)
 
