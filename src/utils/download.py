@@ -19,11 +19,11 @@ def download_audio(video_dir):
     link_file = (video_dir / f"{video_dir.name}_link.txt")
     video_link = link_file.read_text().strip()
 
-    try:
-        command = f"youtube-dl -f 'bestaudio[ext=wav]/bestaudio[ext=m4a]/bestaudio[ext=mp3]' {video_link} -o '{video_dir / f'{video_dir.name}.%(ext)s'}' > /dev/null"
-        os.system(command)
-    except Exception as e:
-        return e
+    command = f"youtube-dl -f 'bestaudio[ext=wav]/bestaudio[ext=m4a]/bestaudio[ext=mp3]' {video_link} -o '{video_dir / f'{video_dir.name}.%(ext)s'}' > /dev/null"
+    ok = os.system(command)
+
+    if ok != 0:
+        print(video_dir.name)
 
     return True
 
@@ -40,7 +40,6 @@ def main(args):
         p = Pool(args.concurrency)
         for ok in p.imap(download_audio, video_list):
             t.update(1)
-
 if __name__ == '__main__':
     args = get_args()
     main(args)
