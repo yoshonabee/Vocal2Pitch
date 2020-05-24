@@ -22,7 +22,7 @@ def main(args: dict) -> None:
         str(audio_dir.absolute())
         for audio_dir in data_dir.glob("*")
         if audio_dir.is_dir()
-        and (audio_dir / f"{audio_dir.name}.wav").exists()
+        and (audio_dir / "vocals.wav").exists()
         and (audio_dir / f"{audio_dir.name}_groundtruth.txt").exists()
     ]
 
