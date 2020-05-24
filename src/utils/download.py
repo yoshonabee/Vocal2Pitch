@@ -3,49 +3,43 @@ from pathlib import Path
 from argparse import ArgumentParser
 from time import sleep
 
+from multiprocessing import Pool
+
 from tqdm import tqdm
 
 def get_args():
     parser = ArgumentParser("download audio from youtube")
     parser.add_argument("data_dir")
     parser.add_argument("--cover", action="store_true")
+    parser.add_argument("--concurrency", type=int, default=10)
 
     return parser.parse_args()
 
-def main(opt):
-    root_dir = Path(opt.data_dir)
-    output_dir = root_dir / "audios"
-    
+def download_audio(video_dir):
+    link_file = (video_dir / f"{video_dir.name}_link.txt")
+    video_link = link_file.read_text().strip()
+
     try:
-        output_dir.mkdir(parents=True)
-    except FileExistsError as e:
-        print("Output dir already exists")
+        command = f"youtube-dl -f 'bestaudio[ext=wav]/bestaudio[ext=m4a]/bestaudio[ext=mp3]' {video_link} -o '{video_dir / f'{video_dir.name}.%(ext)s'}' > /dev/null"
+        os.system(command)
+    except Exception as e:
+        return e
 
-    video_list = tqdm(sorted(root_dir.glob("*")), unit="videos")
+    return True
 
-    for video_dir in video_list:
-        if not video_dir.is_dir() or not (video_dir / f"{video_dir.name}.txt").exists():
-            continue
+def main(args):
+    root_dir = Path(args.data_dir)
 
-        video_list.set_description(f"Downloading {video_dir.name}")
+    video_list = [
+        video_dir
+        for video_dir in root_dir.glob("*")
+        if video_dir.is_dir() and (video_dir / f"{video_dir.name}_link.txt").exists()
+    ]
 
-        txt_file = (video_dir / f"{video_dir.name}_link.txt")
-        video_link = txt_file.read_text().strip()
-        video_id = video_link[-11:]
-
-        if opt.cover or not (output_dir / f"{video_dir.name}.{video_id}.m4a").exists():
-            try:
-                command = f"youtube-dl -f 'bestaudio[ext=m4a]' {video_link} -o '{output_dir / f'{video_dir.name}.%(id)s.%(ext)s'}' > /dev/null"
-                os.system(command)
-                sleep(0.3)
-            except KeyboardInterrupt as e:
-                video_list.close()
-                break
-
-
-    # remove part files generated while downloading
-    for trash in output_dir.glob("*.part"):
-        os.remove(trash)
+    with tqdm(total=len(video_list), unit="audios") as t:
+        p = Pool(args.concurrency)
+        for ok in p.imap(download_audio, video_list):
+            t.update(1)
 
 if __name__ == '__main__':
     args = get_args()
