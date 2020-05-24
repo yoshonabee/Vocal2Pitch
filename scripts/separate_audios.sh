@@ -1,1 +1,1 @@
-python3 src/utils/source_separation.py data/singingTranscription/audios/wav data/singingTranscription/separated
+python3 src/tools/source_separation.py data/singingTranscription/audios/wav data/singingTranscription/separated

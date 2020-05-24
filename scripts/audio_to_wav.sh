@@ -1,1 +1,1 @@
-python3.6 src/utils/audio2wav.py data/MIR-ST500
+python3.6 src/tools/audio2wav.py data/MIR-ST500
