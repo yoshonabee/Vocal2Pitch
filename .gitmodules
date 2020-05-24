@@ -1,3 +1,6 @@
 [submodule "src/Conv-TasNet"]
 	path = src/Conv-TasNet
 	url = https://github.com/yoshonabee/Conv-TasNet.git
+[submodule "src/pytorch_trainer"]
+	path = src/pytorch_trainer
+	url = https://github.com/yoshonabee/pytorch_trainer.git

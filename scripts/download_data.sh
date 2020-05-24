@@ -1,1 +1,1 @@
-python3 src/utils/download.py data/singingTranscription
+python3 src/utils/download.py data/MIR-ST500
