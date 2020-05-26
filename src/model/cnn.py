@@ -3,8 +3,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class CNN(nn.Module):
-    def __init__(self, channels=None, kernel_size=None, strides=None, layers_config=None):
+    def __init__(self, channels=None, kernel_size=None, strides=None, dropout=None, layers_config=None):
         super(CNN, self).__init__()
+
+        if dropout is None:
+            dropout = 0
+
+        self.dropout = dropout
 
         if layers_config is None:
             
@@ -35,20 +40,23 @@ class CNN(nn.Module):
             paddings = (self.kernel_size[i] - 1) // 2
 
             layers.extend([
+                nn.BatchNorm1d(self.channels[i - 1]),
                 nn.Conv1d(self.channels[i - 1], self.channels[i], self.kernel_size[i], self.strides[i], paddings, bias=False),
-                nn.ReLU()
+                nn.ReLU(),
+                nn.Dropout(self.dropout)
             ])
 
         self.cnn = nn.Sequential(*layers)
         self.classifier = nn.Linear(self.channels[-1], 2)
 
-        self._down_sampling_factor = 1
-        for stride in self.strides:
-            self._down_sampling_factor *= stride
-
     @property
     def down_sampling_factor(self):
-        return self._down_sampling_factor
+        down_sampling_factor = 1
+
+        for stride in self.strides:
+            down_sampling_factor *= stride
+
+        return down_sampling_factor
     
     def forward(self, x):
         x = x.unsqueeze(1) # (B, L) -> (B, 1, L)
