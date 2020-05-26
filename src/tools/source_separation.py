@@ -20,9 +20,13 @@ def main(args):
         if (audio_dir / f"{audio_dir.name}.wav").exists()
     ]
 
-    with tqdm(audio_list, unit="audio") as t:
-        for audio in t:
-            subprocess.run(["spleeter", "separate", "-i", str(audio), "-p", "spleeter:2stems", "-o", args.data_dir])
+    command = ["spleeter", "separate", "-i"]
+    for audio in audio_list:
+        command.append(str(audio))
+
+    command.extend(["-p", "spleeter:2stems-16kHz", "-o", args.data_dir])
+
+    subprocess.run(command)
 
 if __name__ == '__main__':
     args = get_args()

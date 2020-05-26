@@ -23,7 +23,7 @@ def get_args():
 def transform_to_wav(input):
     audio, output_path, sr = input
     try:
-        command = ["ffmpeg", "-loglevel", "panic", "-i", audio, "-y", "-ac", "1", "-ar", f"{sr}", "-f", "wav", output_path]
+        command = ["ffmpeg", "-loglevel", "panic", "-i", str(audio), "-y", "-ac", "1", "-ar", str(sr), "-f", "wav", str(output_path)]
         subprocess.run(command)
 
         return True
@@ -39,13 +39,14 @@ def main(args):
 
     audio_list = [
         (
-            audio,
-            audio_dir / f"{audio_dir.name}.wav",
+            audio_dir / "vocals.wav",
+            audio_dir / "vocal.wav",
             args.sample_rate
         ) 
         for audio_dir in data_dir.glob("*")
-        for audio in audio_dir.glob(f"{audio_dir.name}.*")
-        if audio_dir.name.isdigit() and not (audio_dir / f"{audio_dir.name}.wav").exists()
+        # for audio in audio_dir.glob(f"{audio_dir.name}.*")
+        # for audio in audio_dir.glob(f"{audio_dir.name}.*")
+        # if audio_dir.name.isdigit() and audio.suffix.strip('.') in ("wav", "m4a", "aac", "mp3")
     ]
 
     p = Pool(args.concurrency)

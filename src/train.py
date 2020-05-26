@@ -8,6 +8,7 @@ from torch.optim import Adam
 from utils import get_general_args, get_data_args, get_model_args, get_training_args, set_seed
 from data import Dataset
 from model import CNN
+from criterion import ResampleCriterion
 
 from pytorch_trainer import Trainer
 from pytorch_trainer.metrics import Accuracy, Precision, Recall, F1
@@ -15,7 +16,11 @@ from pytorch_trainer.metrics import Accuracy, Precision, Recall, F1
 def main(args):
     if args.task == "onset_offset_detection":
         model_config = json.load(open(args.model_config, 'r'))
-        model = CNN(layers_config=model_config)
+        model = CNN(
+            layers_config=model_config,
+            dropout=args.dropout
+        )
+
         optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
         target_length = int(args.sr * args.segment_length / model.down_sampling_factor)
@@ -44,7 +49,7 @@ def main(args):
             train_dataloader,
             val_dataloader,
             device=torch.device(args.device),
-            criterion="crossentropy",
+            loss_fn=ResampleCriterion(args.inbalance_ratio, args.criterion),
             metrics=[Accuracy(), Precision(), Recall(), F1()],
             lr=args.lr,
             optimizer=optimizer,
@@ -66,5 +71,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     set_seed(args.seed)
+
+    print(args)
+
     main(args)
 

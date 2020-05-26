@@ -26,9 +26,10 @@ class Dataset(torch.utils.data.Dataset):
         self.data = []
 
         with tqdm(json.load(open(self.data_json)), unit="audio") as t:
+            t.set_description("Loading audios")
             for audio_dir in t:
                 audio_dir = Path(audio_dir)
-                audio_path = audio_dir / f"vocals.wav"
+                audio_path = audio_dir / f"vocal.wav"
                 label_path = audio_dir / f"{audio_dir.name}_groundtruth.txt"
 
                 audio, _ = librosa.load(audio_path, sr=self.sr)
