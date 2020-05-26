@@ -1,0 +1,27 @@
+[
+	{
+		"channels": 32,
+		"kernel_size": 128,
+		"strides": 32
+	},
+	{
+		"channels": 128,
+		"kernel_size": 32,
+		"strides": 4
+	},
+	{
+		"channels": 256,
+		"kernel_size": 16,
+		"strides": 2
+	},
+	{
+		"channels": 512,
+		"kernel_size": 8,
+		"strides": 2
+	},
+	{
+		"channels": 1024,
+		"kernel_size": 4,
+		"strides": 2
+	}
+]
