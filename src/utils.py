@@ -19,6 +19,10 @@ def get_model_args(parser):
     group = parser.add_argument_group("model")
 
     group.add_argument("--model_config", type=str, default="config/model.json")
+    group.add_argument("--in_channel", type=int, default=1)
+    group.add_argument("--batchnorm", action='store_true')
+    group.add_argument("--dropout", type=float, default=0)
+    group.add_argument("--output_dim", type=int, default=1)
 
     return parser
 
@@ -29,6 +33,8 @@ def get_training_args(parser):
     group.add_argument("--batch_size", type=int, default=128) 
     group.add_argument("--lr", type=float, default=0.001)
     group.add_argument("--epochs", type=int, default=100)
+    group.add_argument("--criterion", type=str, default="crossentropy", choices=['crossentropy', 'bceloss'])
+    group.add_argument("--inbalance_ratio", type=float, default=0)
     group.add_argument("--valid_interval", type=int, default=1)
     group.add_argument("--name", type=str, default="default")
     group.add_argument("--weight_decay", type=float, default=0)
