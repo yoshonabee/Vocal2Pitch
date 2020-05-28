@@ -3,6 +3,7 @@ def get_general_args(parser):
     parser.add_argument("val_json", type=str)
     parser.add_argument("--task", default="onset_offset_detection", choices=['onset_offset_detection'])
     parser.add_argument("--seed", type=float, default=39)
+    parser.add_argument("-j", "--num_workers", type=int, default=0)
 
     return parser
 

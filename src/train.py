@@ -41,8 +41,8 @@ def main(args):
             sr=args.sr
         )
 
-        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size)
-        val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size)
+        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
+        val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
 
         trainer = Trainer(
             model,
