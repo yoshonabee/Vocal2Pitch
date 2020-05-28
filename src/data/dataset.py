@@ -53,7 +53,7 @@ class Dataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         audio, target = self.data[index]
 
-        return torch.tensor(audio).float(), torch.tensor(target).long()
+        return torch.tensor(audio).float(), target.long()
 
     def __len__(self):
         return len(self.data)
