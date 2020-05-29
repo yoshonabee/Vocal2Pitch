@@ -12,6 +12,10 @@ def get_data_args(parser):
 
     group.add_argument("--thres", type=int, default=0.3)
     group.add_argument("--segment_length", type=float, default=4)
+    group.add_argument("--domain", type=str, choices=["time", "mfcc", "logmfcc"], default="time")
+    group.add_argument("--n_mfcc", type=int, default=39)
+    group.add_argument("--window_len", type=float, default=32)
+    group.add_argument("--hop_len", type=float , default=16)
     group.add_argument("--sr", type=int, default=16000)
 
     return parser
@@ -21,9 +25,9 @@ def get_model_args(parser):
 
     group.add_argument("--model_config", type=str, default="config/model.json")
     group.add_argument("--in_channel", type=int, default=1)
-    group.add_argument("--batchnorm", action='store_true')
+    # group.add_argument("--no_batchnorm", action='store_true')
     group.add_argument("--dropout", type=float, default=0)
-    group.add_argument("--output_dim", type=int, default=1)
+    group.add_argument("--output_dim", type=int, default=2)
 
     return parser
 

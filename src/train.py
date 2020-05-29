@@ -17,28 +17,41 @@ def main(args):
     if args.task == "onset_offset_detection":
         model_config = json.load(open(args.model_config, 'r'))
         model = CNN(
+            in_channel=args.in_channel if args.domain == 'time' else args.n_mfcc,
+            output_dim=args.output_dim,
             layers_config=model_config,
             dropout=args.dropout
         )
 
         optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
-        target_length = int(args.sr * args.segment_length / model.down_sampling_factor)
+        if args.domain == "time":
+            target_length = int(args.sr * args.segment_length / model.down_sampling_factor)
+        else:
+            target_length = int(((args.sr * args.segment_length - args.window_len) / args.hop_len + 1) // model.down_sampling_factor)
 
         train_dataset = Dataset(
             args.train_json,
             thres=args.thres,
+            domain=args.domain,
             target_length=target_length,
             segment_length=args.segment_length,
-            sr=args.sr
+            sr=args.sr,
+            window_len=args.window_len,
+            hop_len=args.hop_len,
+            n_mfcc=args.n_mfcc
         )
 
         val_dataset = Dataset(
             args.val_json,
             thres=args.thres,
+            domain=args.domain,
             target_length=target_length,
             segment_length=args.segment_length,
-            sr=args.sr
+            sr=args.sr,
+            window_len=args.window_len,
+            hop_len=args.hop_len,
+            n_mfcc=args.n_mfcc
         )
 
         train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers)

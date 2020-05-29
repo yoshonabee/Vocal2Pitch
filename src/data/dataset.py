@@ -10,13 +10,17 @@ import torch
 from tqdm import tqdm
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, data_json, thres, target_length, segment_length=4, sr=16000):
+    def __init__(self, data_json, thres, target_length, domain="mfcc", segment_length=4, sr=16000, n_mfcc=None, window_len=None, hop_len=None):
         self.data_json = Path(data_json)
         self.thres = thres
+        self.domain = domain
         self.target_length = target_length
         self.sr = sr
         self.segment_length = segment_length
-        self.segment_frame = sr * segment_length
+        self.segment_frame = int(sr * segment_length)
+
+        self.window_len = window_len
+        self.hop_len = hop_len
 
         self.data = []
 
@@ -48,7 +52,18 @@ class Dataset(torch.utils.data.Dataset):
                         onset_idx += 1
 
                     target = make_target_tensor(onsets, start_time, self.segment_length, self.target_length)
-                    self.data.append([audio[frame:frame + self.segment_frame], target])
+
+                    segment = audio[frame:frame + self.segment_frame]
+
+                    if self.domain == 'mfcc':
+                        segment = torch.tensor(librosa.feature.mfcc(segment, sr=self.sr, n_mfcc=self.n_mfcc))
+                    elif self.domain == 'logmfcc':
+                        segment = torch.tensor(librosa.feature.mfcc(segment, sr=self.sr, n_mfcc=self.n_mfcc))
+                        segment = torch.log(segment + 1e-6)
+                    else:
+                        segment = torch.tensor(segment)
+
+                    self.data.append([segment, target])
 
     def __getitem__(self, index):
         audio, target = self.data[index]
