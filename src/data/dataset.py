@@ -71,15 +71,13 @@ class Dataset(torch.utils.data.Dataset):
                     target = make_target_tensor(onsets, start_time, self.segment_length, target_frame)
 
                     segment = audio[frame:frame + segment_frame]
-                    segment = self.transform(segment)
-
 
                     self.data.append([segment, target])
 
     def __getitem__(self, index):
-        audio, target = self.data[index]
+        segment, target = self.data[index]
 
-        return torch.tensor(audio).float(), target.long()
+        return self.transform(segment), target.long()
 
     def __len__(self):
         return len(self.data)
