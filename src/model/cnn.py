@@ -2,66 +2,47 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import json
+
 class CNN(nn.Module):
-    def __init__(self, in_channel=None, output_dim=None, channels=None, kernel_size=None, strides=None, dropout=None, layers_config=None):
+    def __init__(self, in_channel=None, output_dim=None, model_config=None):
         super(CNN, self).__init__()
 
-        if dropout is None:
-            dropout = 0
+        self.model_config = model_config
 
-        self.dropout = dropout
+        self._down_sampling_rate = 1
 
-        if layers_config is None:
-            
-            self.channels = channels
-            self.strides = strides
+        self.cnn = None
+        self.classifier = None
+        self._parse_model_config()
 
-            if isinstance(kernel_size, int):
-                self.kernel_size = [kernel_size for _ in range(len(self.strides))]
-            else:
-                self.kernel_size = kernel_size
+    def _parse_model_config(self):
+        cnn_layers = []
+        classifier_layers = []
+        config = json.load(open(self.model_config))
 
-            try:
-                assert len(self.kernel_size) == len(self.strides)
-                assert len(self.channels) == len(self.strides)
-            except Exception as e:
-                raise ValueError("length of kernel_size, channels, strides must all be the same")
-        else:
-            self.channels = [layer['channels'] for layer in layers_config]
-            self.kernel_size = [layer['kernel_size'] for layer in layers_config]
-            self.strides = [layer['strides'] for layer in layers_config]
+        for layer in config['feature_extractor']:
+            cnn_layers.append(getattr(nn, layer.pop("name"))(**layer))
 
-        layers = [
-            nn.Conv1d(in_channel, self.channels[0], self.kernel_size[0], self.strides[0], (self.kernel_size[0] - 1) // 2, bias=True),
-            nn.ReLU()
-        ]
+            if "stride" in layer:
+                self._down_sampling_rate *= layer['stride']
 
-        for i in range(1, len(self.strides)):
-            paddings = (self.kernel_size[i] - 1) // 2
+        print(cnn_layers)
 
-            layers.extend([
-                nn.BatchNorm1d(self.channels[i - 1]),
-                nn.Conv1d(self.channels[i - 1], self.channels[i], self.kernel_size[i], self.strides[i], paddings, bias=True),
-                nn.ReLU(),
-                nn.Dropout(self.dropout)
-            ])
+        for layer in config['classifier']:
+            classifier_layers.append(getattr(nn, layer.pop("name"))(**layer))
 
-        self.cnn = nn.Sequential(*layers)
-        self.classifier = nn.Linear(self.channels[-1], output_dim)
+        self.cnn = nn.Sequential(*cnn_layers)
+        self.classifier = nn.Sequential(*classifier_layers)
 
     @property
-    def down_sampling_factor(self):
-        down_sampling_factor = 1
-
-        for stride in self.strides:
-            down_sampling_factor *= stride
-
-        return down_sampling_factor
+    def down_sampling_rate(self):
+        return self._down_sampling_rate
     
     def forward(self, x):
         # print(x.shape)
         x = x.unsqueeze(1) # (B, L) -> (B, 1, L)
-        x = self.cnn(x) # (B, 1, L) -> (B, C, L // down_sampling_factor (L'))
+        x = self.cnn(x) # (B, 1, L) -> (B, C, L')
         x = x.transpose(1, 2) # (B, C, L') -> (B, L', C)
         out = self.classifier(x) # (B, L', C) -> (B, L', 2)
 

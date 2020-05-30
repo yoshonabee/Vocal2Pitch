@@ -1,17 +1,43 @@
-[
-	{
-		"channels": 128,
-		"kernel_size": 128,
-		"strides": 64
-	},
-	{
-		"channels": 256,
-		"kernel_size": 32,
-		"strides": 4
-	},
-	{
-		"channels": 512,
-		"kernel_size": 32,
-		"strides": 2
-	}
-]
+{
+	"feature_extractor": [
+		{
+			"name": "Conv1d",
+			"in_channels": 1,
+			"out_channels": 128,
+			"kernel_size": 128,
+			"stride": 64
+		},
+		{"name": "ReLU"},
+		{
+			"name": "BatchNorm1d",
+			"num_features": 128
+		},
+		{
+			"name": "Conv1d",
+			"in_channels": 128,
+			"out_channels": 256,
+			"kernel_size": 32,
+			"stride": 4
+		},
+		{"name": "ReLU"},
+		{
+			"name": "BatchNorm1d",
+			"num_features": 256
+		},
+		{
+			"name": "Conv1d",
+			"in_channels": 256,
+			"out_channels": 512,
+			"kernel_size": 32,
+			"stride": 2
+		},
+		{"name": "ReLU"}
+	],
+	"classifier": [
+		{
+			"name": "Linear",
+			"in_features": 512,
+			"out_features": 2
+		}
+	]
+}
