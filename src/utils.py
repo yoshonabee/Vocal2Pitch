@@ -25,9 +25,9 @@ def get_training_args(parser):
 
     group.add_argument("--device", type=str, default="cuda:0")  
     group.add_argument("--batch_size", type=int, default=128) 
-    group.add_argument("--lr", type=float, default=0.001)
+    group.add_argument("--lr", type=float, default=0.0001)
     group.add_argument("--epochs", type=int, default=100)
-    group.add_argument("--criterion", type=str, default="crossentropy", choices=['crossentropy', 'bceloss'])
+    group.add_argument("--criterion", type=str, default="bceloss", choices=['crossentropy', 'bceloss'])
     group.add_argument("--inbalance_ratio", type=float, default=0)
     group.add_argument("--valid_interval", type=int, default=1)
     group.add_argument("--name", type=str, default="default")

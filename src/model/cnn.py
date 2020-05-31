@@ -8,42 +8,35 @@ class CNN(nn.Module):
     def __init__(self, in_channel=None, output_dim=None, model_config=None):
         super(CNN, self).__init__()
 
-        self.model_config = model_config
+        layers = [
+            nn.Conv2d(1, 10, (3, 7), 1),
+            nn.ReLU(),
+            nn.MaxPool2d((3, 1)),
+            nn.Conv2d(10, 20, (3, 3), 1),
+            nn.ReLU(),
+            nn.MaxPool2d((3, 1)),
+            nn.Conv2d(20, 60, (3, 3), 1, (1, 1)),
+            nn.ReLU(),
+            nn.BatchNorm2d(60),
+            nn.Conv2d(60, 60, (3, 3), 1, (1, 1)),
+            nn.ReLU(),
+            nn.BatchNorm2d(60),
+            nn.Conv2d(60, 60, (3, 3), 1, (1, 1)),
+            nn.ReLU(),
+            nn.BatchNorm2d(60),
+        ]
 
-        self._down_sampling_rate = 1
+        self.net = nn.Sequential(*layers)
 
-        self.cnn = None
-        self.classifier = None
-        self._parse_model_config()
+        layers = [
+            nn.Linear(3360, 1),
+            nn.Sigmoid()
+        ]
 
-    def _parse_model_config(self):
-        cnn_layers = []
-        classifier_layers = []
-        config = json.load(open(self.model_config))
-
-        for layer in config['feature_extractor']:
-            cnn_layers.append(getattr(nn, layer.pop("name"))(**layer))
-
-            if "stride" in layer:
-                self._down_sampling_rate *= layer['stride']
-
-        print(cnn_layers)
-
-        for layer in config['classifier']:
-            classifier_layers.append(getattr(nn, layer.pop("name"))(**layer))
-
-        self.cnn = nn.Sequential(*cnn_layers)
-        self.classifier = nn.Sequential(*classifier_layers)
-
-    @property
-    def down_sampling_rate(self):
-        return self._down_sampling_rate
+        self.out = nn.Sequential(*layers)
     
     def forward(self, x):
-        # print(x.shape)
-        x = x.unsqueeze(1) # (B, L) -> (B, 1, L)
-        x = self.cnn(x) # (B, 1, L) -> (B, C, L')
-        x = x.transpose(1, 2) # (B, C, L') -> (B, L', C)
-        out = self.classifier(x) # (B, L', C) -> (B, L', 2)
-
-        return out
+        x = x.unsqueeze(1)
+        x = self.net(x)
+        x = x.view(x.size(0), -1)
+        return self.out(x)

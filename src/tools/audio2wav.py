@@ -39,8 +39,8 @@ def main(args):
 
     audio_list = [
         (
-            audio_dir / "vocals.wav",
-            audio_dir / "vocal.wav",
+            audio_dir / f"{audio_dir.name}.m4a",
+            audio_dir / f"{audio_dir.name}.wav",
             args.sample_rate
         ) 
         for audio_dir in data_dir.glob("*")

@@ -18,18 +18,17 @@ class ResampleCriterion(DefaultCriterion):
     def forward(self, model, data):
         x, y = data
         x = x.to(self.device)
-        y = y.to(self.device)
+        y = y.to(self.device).float()
 
         pred = model(x)
 
         resampled_pred, resampled_y = self.resample(pred, y)
-
         loss = self.criterion(resampled_pred, resampled_y)
 
         return loss, pred, y
 
     def resample(self, pred, y):
-        r_pred = pred.view(-1, pred.size(-1))
+        r_pred = pred.view(-1)
         r_y = y.view(-1)
 
         if self.inbalance_ratio <= 0:
