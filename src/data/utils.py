@@ -21,6 +21,16 @@ def make_target_tensor(onset_list, start_time, time_length, length):
 
     for onset in onset_list:
         frame = int((onset - start_time) // time_per_frame)
+        try:
+            tensor[frame - 1] = 0.25
+        except:
+            pass
+
+        try:
+            tensor[frame + 1] = 0.25
+        except:
+            pass
+
         tensor[frame] = 1
 
     return tensor

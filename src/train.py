@@ -22,14 +22,12 @@ def main(args):
 
         train_dataset = Dataset(
             args.train_json,
-            feature_config=args.feature_config,
-            model_down_sampling_rate=model.down_sampling_rate
+            feature_config=args.feature_config
         )
 
         val_dataset = Dataset(
             args.val_json,
-            feature_config=args.feature_config,
-            model_down_sampling_rate=model.down_sampling_rate
+            feature_config=args.feature_config
         )
 
         train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
@@ -41,7 +39,7 @@ def main(args):
             val_dataloader,
             device=torch.device(args.device),
             loss_fn=ResampleCriterion(args.inbalance_ratio, args.criterion),
-            metrics=[Accuracy(), Precision(), Recall(), F1()],
+            metrics=[Accuracy(True), Precision(True), Recall(True), F1(True)],
             lr=args.lr,
             optimizer=optimizer,
             epochs=args.epochs,
