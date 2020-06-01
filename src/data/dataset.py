@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from IPython import embed
 from time import sleep
+import math
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, data_json, feature_config):
@@ -22,6 +23,8 @@ class Dataset(torch.utils.data.Dataset):
 
         self.frame_hop = 1
         self.frame_width = 15
+
+        assert self.frame_hop % 2 == 1
 
         self.data = []
 
@@ -42,7 +45,7 @@ class Dataset(torch.utils.data.Dataset):
     #         return int(((self.sr * self.segment_length) / self.hop_length + 1) // self.model_down_sampling_rate)
 
     def _get_transform(self):
-        return torchaudio.transforms.MelSpectrogram(44100, 2048, hop_length=512, f_min=27.5, f_max=16000, n_mels=80)
+        return torchaudio.transforms.MelSpectrogram(44100, 2048, hop_length=512, f_min=27.5, f_max=16000, n_mels=80).cuda()
         if self.domain == "time":
             return lambda x: x
         elif self.domain == "spectrogram":
@@ -68,10 +71,12 @@ class Dataset(torch.utils.data.Dataset):
         # target_frame = 86
 
         with tqdm(json.load(open(self.data_json)), unit="audio") as t:
-            t.set_description("Loading audios")
 
             for i, audio_dir in enumerate(t):
                 audio_dir = Path(audio_dir)
+
+                t.set_description(audio_dir.name)
+
                 audio_path = audio_dir / f"vocals.wav"
                 label_path = audio_dir / f"{audio_dir.name}_groundtruth.txt"
 
@@ -82,14 +87,14 @@ class Dataset(torch.utils.data.Dataset):
                 audio = audio.sum(0).view(-1)
                 audio_length = audio.size(0) / 44100
 
-                spectrogram = self.transform(audio)
+                spectrogram = self.transform(audio.cuda()).detach().cpu()
 
                 self.data.append(spectrogram)
 
                 idxs = self.parse_index(i, onset_list, spectrogram.size(1), audio_length)
                 self.index.extend(idxs)
 
-                # if i == 5:
+                #if i == 5:
                 #     break
 
             # self.index = sorted(self.index, key=lambda x: -x[-1])
@@ -101,10 +106,10 @@ class Dataset(torch.utils.data.Dataset):
             
             # embed()
 
-            if i * 2 < len(self.index):
-                self.max_index = i * 2
-            else:
-                self.max_index = len(self.index)
+            # if i * 2 < len(self.index):
+            #    self.max_index = i * 2
+            #else:
+            #    self.max_index = len(self.index)
 
 
                 
@@ -126,10 +131,10 @@ class Dataset(torch.utils.data.Dataset):
         frame_times = np.array([i * frame_width for i in range(self.frame_width)])
 
         center_idx = math.ceil(self.frame_width / 2) - 1
-
+        
         onset_idx = 0
         dont_add = 0
-        for i in range(0, n_frames - self.frame_width + 1, self.frame_hop):
+        for i in range(0, n_frames - self.frame_width - 2 * self.frame_hop + 1, self.frame_hop):
             if dont_add > 0:
                 dont_add -= 1
                 continue
@@ -137,17 +142,16 @@ class Dataset(torch.utils.data.Dataset):
             while onset_list[onset_idx] < frame_times[0] and onset_idx < len(onset_list) - 1:
                 onset_idx += 1
 
-            if onset_list[onset_idx] < frame_times[center_idx] or onset_list[onset_idx] >= frame_times[center_idx + self.frame_hop]:
+            if onset_list[onset_idx] < frame_times[center_idx - self.frame_hop // 2] or onset_list[onset_idx] >= frame_times[center_idx + self.frame_hop // 2 + 1]:
                 result.append([audio_id, i, i + self.frame_width, 0])
             else:
-                result[-2][-1] = 0.2
-                result[-1][-1] = 0.6
+                if i != 0:
+                    result[-1][-1] = 0.25
                 result.append([audio_id, i, i + self.frame_width, 1])
-                result.append([audio_id, i + self.frame_hop, i + self.frame_hop + self.frame_width, 0.6])
-                result.append([audio_id, i + 2 * self.frame_hop, i + 2 * self.frame_hop + self.frame_width, 0.2])
-                dont_add = 2
+                result.append([audio_id, i + self.frame_hop, i + self.frame_hop + self.frame_width, 0.25])
+                dont_add = 1
             
-            frame_times += frame_width
+            frame_times += frame_width * self.frame_hop
 
         return result
 
