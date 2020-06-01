@@ -36,7 +36,7 @@ def get_training_args(parser):
 
     return parser
 
-def get_evaluating_args(parser):
+def get_predicting_args(parser):
     parser.add_argument("audio_list")
     parser.add_argument("model_path")
     parser.add_argument("--thres", type=float, default=0.5)
@@ -44,6 +44,10 @@ def get_evaluating_args(parser):
     parser.add_argument("--batch_size", type=int, default=512)
     parser.add_argument("--device", type=str, default="cuda:0")
     return parser
+
+def get_evaluating_args(parser):
+    parser.add_argument("predict_json")
+    parser.add_argument("data_dir")
 
 def set_seed(seed):
     import random
