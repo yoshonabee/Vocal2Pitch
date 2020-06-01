@@ -27,6 +27,7 @@ def main(args):
 
     with tqdm(audio_list, unit="audio") as t:
         for audio_dir in t:
+            audio_dir = Path(audio_dir)
             dataset = EvalDataset(audio_dir)
             dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
@@ -65,7 +66,7 @@ def main(args):
     print(f"f1_score: {f1_score}")
 
 def cal_tp(pred, target):
-    i, j = 0, 0
+    i, j, tp = 0, 0, 0
 
     while i < len(pred) and j < len(target):
         if pred[i] < target[j] - 0.05:

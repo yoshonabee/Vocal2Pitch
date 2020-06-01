@@ -9,27 +9,29 @@ class CNN(nn.Module):
         super(CNN, self).__init__()
 
         layers = [
-            nn.Conv2d(1, 10, (3, 7), 1),
+            nn.Conv2d(1, 32, (3, 7), 1),
             nn.ReLU(),
             nn.MaxPool2d((3, 1)),
-            nn.Conv2d(10, 20, (3, 3), 1),
+            nn.Conv2d(32, 64, (3, 3), 1),
             nn.ReLU(),
             nn.MaxPool2d((3, 1)),
-            nn.Conv2d(20, 60, (3, 3), 1, (1, 1)),
+            nn.Dropout(0.3),
+            nn.Conv2d(64, 128, (3, 3), 1, (1, 1)),
             nn.ReLU(),
-            nn.BatchNorm2d(60),
-            nn.Conv2d(60, 60, (3, 3), 1, (1, 1)),
+            nn.BatchNorm2d(128),
+            nn.Conv2d(128, 128, (3, 3), 1, (1, 1)),
             nn.ReLU(),
-            nn.BatchNorm2d(60),
-            nn.Conv2d(60, 60, (3, 3), 1, (1, 1)),
+            nn.BatchNorm2d(128),
+            nn.Conv2d(128, 128, (3, 3), 1, (1, 1)),
             nn.ReLU(),
-            nn.BatchNorm2d(60),
+            nn.BatchNorm2d(128),
+            nn.Dropout(0.3)
         ]
 
         self.net = nn.Sequential(*layers)
 
         layers = [
-            nn.Linear(3360, 1),
+            nn.Linear(7168, 1),
             nn.Sigmoid()
         ]
 

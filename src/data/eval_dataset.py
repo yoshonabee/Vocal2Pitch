@@ -40,12 +40,10 @@ class EvalDataset(torch.utils.data.Dataset):
 
         frame_time = (audio.size(0) / sr) / self.spectrogram.size(1)
 
-        self.index.extend([[e, i, i + 15] for i in range(self.spectrogram.size(1) - 15 + 1)])
-
         self.frame_time = [(i + 7) * frame_time for i in range(self.spectrogram.size(1) - 15 + 1)]
 
     def __getitem__(self, index):
-        return self.spectrogram[index:index + 15].float(), self.frame_time[index]
+        return self.spectrogram[:,index:index + 15].float(), self.frame_time[index]
 
     def __len__(self):
         return len(self.frame_time)
