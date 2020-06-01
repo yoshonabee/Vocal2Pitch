@@ -26,9 +26,12 @@ class EvalDataset(torch.utils.data.Dataset):
         self._load_data()
 
     def _load_data(self):
-        self.onset_list = defaultdict()
+        self.onset_list = {}
+        self.index = []
+        self.data = []
+        self.frame_time = {}
         with tqdm(json.load(open(self.audio_list)), unit="audio") as t:
-            for audio_dir in t:
+            for e, audio_dir in enumerate(t):
                 audio_dir = Path(audio_dir)
                 audio_path = audio_dir / "vocals.wav"
                 label_path = audio_dir / f"{self.audio_dir.name}_groundtruth.txt"
@@ -36,18 +39,22 @@ class EvalDataset(torch.utils.data.Dataset):
                 audio, sr = torchaudio.load(audio_path)
                 audio = audio.sum(0).view(-1)
 
-                self.spectrogram = self.transform(audio.cuda()).detach().cpu()
+                spectrogram = self.transform(audio.cuda()).detach().cpu()
+                self.data.append(spectrogram)
 
                 self.onset_list[audio_dir.name] = get_onset_list(label_path)
 
-                frame_time = (audio.size(0) / sr) / self.spectrogram.size(1)
+                frame_time = (audio.size(0) / sr) / spectrogram.size(1)
 
-                for i in range(self.spectrogram.size(1)):
-                    self.frame_time.append(audio_dir.name, (i + 7) * frame_time)
+                self.index.extend([[e, i, i + 15] for i in range(spectrogram.size(1) - 15 + 1)])
+
+                self.frame_time[e] = [(audio_dir.name, (i + 7) * frame_time) for i in range(spectrogram.size(1) - 15 + 1)]
 
     def __getitem__(self, index):
-        return self.spectrogram[index:index + 15].float(), self.frame_time[index]
+        audio_id, start, end = self.index[index]
+
+        return self.spectrogram[audio_id][start:end].float(), self.frame_time[audio_id][start]
 
     def __len__(self):
-        return len(self.data)
+        return len(self.index)
 
