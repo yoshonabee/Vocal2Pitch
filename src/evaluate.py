@@ -3,39 +3,46 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from pathlib import Path
 
-import torchaudio
+import json
 import math
 import torch
 from model import CNN
 from data import EvalDataset
 from utils import get_evaluating_args, set_seed
 
-transform = torchaudio.transforms.MelSpectrogram()
+from tqdm import tqdm
+
+
 def main(args):
     model = CNN()
     model.load_state_dict(torch.load(args.model_path, map_location="cpu"))
 
-    dataset = EvalDataset(args.audio_list)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
-
     pred_onset_list = defaultdict(list)
+    onset_list = {}
 
     model.to(args.device)
     model.eval()
-    with tqdm(dataloader, total=math.ceil(len(dataset) / args.batch_size), unit="sample") as t:
-        for i, (x, idx) in t:
-            idx = idx.tolist()
-            
-            x = x.to(args.device)
 
-            pred = (model(x) > args.thres).view(-1).long().tolist()
+    audio_list = json.load(open(args.audio_list))
 
-            for (audio_name, t), p in zip(idx, pred):
-                if p == 1:
-                    pred_onset_list[audio_name].append(t)
+    with tqdm(audio_list, unit="audio") as t:
+        for audio_dir in t:
+            dataset = EvalDataset(audio_dir)
+            dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
+
+            for x, idx in dataloader:
+                idx = idx.tolist()
+                
+                x = x.to(args.device)
+
+                pred = (model(x) > args.thres).view(-1).long().tolist()
+
+                for t, p in zip(idx, pred):
+                    if p == 1:
+                        pred_onset_list[audio_dir.name].append(t)
 
 
-    onset_list = dataset.onset_list
+            onset_list[audio_dir.name] = dataset.onset_list
 
     print(len(onset_list), len(pred_onset_list))
 

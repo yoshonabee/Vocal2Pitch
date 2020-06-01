@@ -11,8 +11,8 @@ import torch
 from tqdm import tqdm
 
 class EvalDataset(torch.utils.data.Dataset):
-    def __init__(self, audio_list):
-        self.audio_list = Path(audio_list)
+    def __init__(self, audio_dir):
+        self.audio_dir = Path(audio_dir)
 
         self.transform = torchaudio.transforms.MelSpectrogram(
             sample_rate=44100,
@@ -26,35 +26,27 @@ class EvalDataset(torch.utils.data.Dataset):
         self._load_data()
 
     def _load_data(self):
-        self.onset_list = {}
-        self.index = []
-        self.data = []
-        self.frame_time = {}
-        with tqdm(json.load(open(self.audio_list)), unit="audio") as t:
-            for e, audio_dir in enumerate(t):
-                audio_dir = Path(audio_dir)
-                audio_path = audio_dir / "vocals.wav"
-                label_path = audio_dir / f"{self.audio_dir.name}_groundtruth.txt"
 
-                audio, sr = torchaudio.load(audio_path)
-                audio = audio.sum(0).view(-1)
+        audio_path = self.audio_dir / "vocals.wav"
+        label_path = self.audio_dir / f"{self.audio_dir.name}_groundtruth.txt"
 
-                spectrogram = self.transform(audio.cuda()).detach().cpu()
-                self.data.append(spectrogram)
+        audio, sr = torchaudio.load(audio_path)
+        audio = audio.sum(0).view(-1)
 
-                self.onset_list[audio_dir.name] = get_onset_list(label_path)
+        self.spectrogram = self.transform(audio.cuda()).detach().cpu()
 
-                frame_time = (audio.size(0) / sr) / spectrogram.size(1)
+        label = pd.read_csv(label_path, sep=" ", header=None, names=["start", "end", "pitch"])
+        self.onset_list = get_onset_list(label, 0.03)
 
-                self.index.extend([[e, i, i + 15] for i in range(spectrogram.size(1) - 15 + 1)])
+        frame_time = (audio.size(0) / sr) / self.spectrogram.size(1)
 
-                self.frame_time[e] = [(audio_dir.name, (i + 7) * frame_time) for i in range(spectrogram.size(1) - 15 + 1)]
+        self.index.extend([[e, i, i + 15] for i in range(self.spectrogram.size(1) - 15 + 1)])
+
+        self.frame_time = [(i + 7) * frame_time for i in range(self.spectrogram.size(1) - 15 + 1)]
 
     def __getitem__(self, index):
-        audio_id, start, end = self.index[index]
-
-        return self.spectrogram[audio_id][start:end].float(), self.frame_time[audio_id][start]
+        return self.spectrogram[index:index + 15].float(), self.frame_time[index]
 
     def __len__(self):
-        return len(self.index)
+        return len(self.frame_time)
 
