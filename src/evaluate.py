@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 
+from collections import defaultdict
 from pathlib import Path
 
 import torchaudio
@@ -17,28 +18,38 @@ def main(args):
     dataset = EvalDataset(args.audio_dir)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
-    times = []
-    predictions = []
-    model = model.to(args.device)
+    pred_onset_list = defaultdict(list)
+
+    model.to(args.device)
+    model.eval()
     with tqdm(dataloader, total=math.ceil(len(dataset) / args.batch_size), unit="sample") as t:
         for i, (x, idx) in t:
-            times.extend(idx.tolist())
+            idx = idx.tolist()
+            
             x = x.to(args.device)
 
-            pred = (model(x) > args.thres).long()
-            predictions.extend(pred.tolist())
+            pred = (model(x) > args.thres).view(-1).long().tolist()
 
-    pred_onset_list = []
-    for t, label in zip(times, predictions):
-        if label == 1:
-            pred_onset_list.append(t)
+            for (audio_name, t), p in zip(idx, pred):
+                if p == 1:
+                    pred_onset_list[audio_name].append(t)
+
 
     onset_list = dataset.onset_list
 
-    tp = cal_tp(pred_onset_list, onset_list)
+    print(len(onset_list), len(pred_onset_list))
 
-    precision = tp / len(pred_onset_list)
-    recall = tp / len(onset_list)
+    tp = 0
+    n_target = 0
+    n_pred = 0
+
+    for name in onset_list:
+        tp += cal_tp(pred_onset_list[name], onset_list[name])
+        n_target += len(onset_list[name])
+        n_pred += len(pred_onset_list[name])
+
+    precision = tp / n_pred
+    recall = tp / n_target
 
     f1_score = 2 * precision * recall / (precision + recall)
 
