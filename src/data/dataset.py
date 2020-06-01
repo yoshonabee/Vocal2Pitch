@@ -130,28 +130,31 @@ class Dataset(torch.utils.data.Dataset):
         frame_width = audio_length / n_frames
         frame_times = np.array([i * frame_width for i in range(self.frame_width)])
 
-        center_idx = math.ceil(self.frame_width / 2) - 1
-        
         onset_idx = 0
-        dont_add = 0
-        for i in range(0, n_frames - self.frame_width - 2 * self.frame_hop + 1, self.frame_hop):
-            if dont_add > 0:
-                dont_add -= 1
-                continue
+        for i in range(0, n_frames - self.frame_width + 1):
 
             while onset_list[onset_idx] < frame_times[0] and onset_idx < len(onset_list) - 1:
                 onset_idx += 1
 
-            if onset_list[onset_idx] < frame_times[center_idx - self.frame_hop // 2] or onset_list[onset_idx] >= frame_times[center_idx + self.frame_hop // 2 + 1]:
-                result.append([audio_id, i, i + self.frame_width, 0])
+            start_idx = (self.frame_width // 2) + 3 * self.frame_hop
+            end_idx = (self.frame_width // 2) - 2 * self.frame_hop
+
+            if onset_list[onset_idx] >= frame_times[start_idx] or onset_list[onset_idx] < frame_times[end_idx]:
+                target = 0
             else:
-                if i != 0:
-                    result[-1][-1] = 0.25
-                result.append([audio_id, i, i + self.frame_width, 1])
-                result.append([audio_id, i + self.frame_hop, i + self.frame_hop + self.frame_width, 0.25])
-                dont_add = 1
-            
+                for j in range(start_idx, end_idx):
+                    if onset_list[onset_idx] >= frame_times[j] and onset_list[onset_idx] < frame_times[j + 1]:
+                        if j == self.frame_width // 2:
+                            target = 1
+                        elif j == self.frame_width // 2 - self.frame_hop or j == self.frame_width // 2 + self.frame_hop:
+                            target = 0.6
+                        elif j == self.frame_width // 2 - 2 * self.frame_hop or j == self.frame_width // 2 + 2 * self.frame_hop:
+                            target = 0.2
+                        else: target = 0
+
+                        break
+
+            result.append([audio_id, i, i + self.frame_width, target])
             frame_times += frame_width * self.frame_hop
 
         return result
-
