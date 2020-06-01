@@ -1,91 +1,90 @@
 from argparse import ArgumentParser
 
-from collections import defaultdict
 from pathlib import Path
 
 import json
-import math
+
 import torch
-from model import CNN
-from data import EvalDataset
-from utils import get_evaluating_args, set_seed
+
+import numpy as np
+import pandas as pd
+
+from utils import get_evaluating_args
 
 from tqdm import tqdm
 
-
 def main(args):
-    model = CNN()
-    model.load_state_dict(torch.load(args.model_path, map_location="cpu"))
+    predict_json = json.load(open(args.predict_json))
 
-    pred_onset_list = defaultdict(list)
-    onset_list = {}
+    data_dir = Path(args.data_dir)
 
-    model.to(args.device)
-    model.eval()
+    with tqdm(total=len(predict_json), unit="audio") as t:
+        total_COn = 0
+        total_COnP = 0
+        total_COnPOff = 0
 
-    audio_list = json.load(open(args.audio_list))
+        for name in predict_json:
+            pred = np.array(predict_json[name])
+            gt_path = data_dir / name / f"{name}_groundtruth.txt"
 
-    with tqdm(audio_list, unit="audio") as t:
-        for audio_dir in t:
-            audio_dir = Path(audio_dir)
-            dataset = EvalDataset(audio_dir)
-            dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
+            gt = pd.read_csv(gt_path, sep=" ", header=None).values()
 
-            for x, idx in dataloader:
-                idx = idx.tolist()
-                
-                x = x.to(args.device)
+            assert pred.shape[1] == gt.shape[1]
 
-                pred = (model(x) > args.thres).view(-1).long().tolist()
+            con, conp, conpoff = evaluate(pred, target)
 
-                for t, p in zip(idx, pred):
-                    if p == 1:
-                        pred_onset_list[audio_dir.name].append(t)
+            total_COn += con
+            total_COnP += conp
+            total_COnPOff += conpoff
 
+            t.update(1)
 
-            onset_list[audio_dir.name] = dataset.onset_list
+    print(f"total audios: {len(predict_json)}")
+    print(f"total COn: {total_COn}")
+    print(f"total COnP: {total_COnP}")
+    print(f"total COnPOff: {total_COnPOff}")
+    print(f"total score: {total_COn * 0.2 + total_COnP * 0.6 + total_COnPOff * 0.2}")
 
-    print(len(onset_list), len(pred_onset_list))
-
-    tp = 0
-    n_target = 0
-    n_pred = 0
-
-    for name in onset_list:
-        tp += cal_tp(pred_onset_list[name], onset_list[name])
-        n_target += len(onset_list[name])
-        n_pred += len(pred_onset_list[name])
-
-    precision = tp / n_pred
-    recall = tp / n_target
-
-    f1_score = 2 * precision * recall / (precision + recall)
-
-    print(f"precision: {precision}")
-    print(f"recall: {recall}")
-    print(f"f1_score: {f1_score}")
-
-def cal_tp(pred, target):
+def evaluate(pred, target):
     i, j, tp = 0, 0, 0
 
     while i < len(pred) and j < len(target):
-        if pred[i] < target[j] - 0.05:
+
+        if pred[i][0] < target[j][0] - 0.05:
             i += 1
-        elif target[j] < pred[i] - 0.05:
+        elif target[j][0] < pred[i][0] - 0.05:
             j += 1
         else:
-            tp += 1
+            con_tp += 1
+
+            if pred[i][2] == target[j][2]:
+                conp_tp += 1
+
+                if abs(pred[i][1] - target[j][1]) <= 0.05:
+                    conpoff_tp += 1
+
             i += 1
             j += 1
 
-    return tp
+    precision = con_tp / len(pred)
+    recall = con_tp / len(target)
+    con = 2 * precision * recall / (precision + recall + 1e-6)
+
+    precision = conp_tp / len(pred)
+    recall = conp_tp / len(target)
+    conp = 2 * precision * recall / (precision + recall + 1e-6)
+
+    precision = conpoff_tp / len(pred)
+    recall = conpoff_tp / len(target)
+    conpoff = 2 * precision * recall / (precision + recall + 1e-6)
+
+
+    return con, conp, conpoff
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser = get_evaluating_args(parser)
     args = parser.parse_args()
-
-    set_seed(args.seed)
 
     print(args)
     main(args)
