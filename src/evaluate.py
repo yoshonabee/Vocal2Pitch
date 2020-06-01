@@ -15,7 +15,7 @@ def main(args):
     model = CNN()
     model.load_state_dict(torch.load(args.model_path, map_location="cpu"))
 
-    dataset = EvalDataset(args.audio_dir)
+    dataset = EvalDataset(args.audio_list)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
     pred_onset_list = defaultdict(list)
@@ -55,7 +55,7 @@ def main(args):
 
     print(f"precision: {precision}")
     print(f"recall: {recall}")
-    print(f"f1_score": {f1_score})
+    print(f"f1_score: {f1_score}")
 
 def cal_tp(pred, target):
     i, j = 0, 0

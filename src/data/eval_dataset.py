@@ -14,15 +14,14 @@ class EvalDataset(torch.utils.data.Dataset):
     def __init__(self, audio_list):
         self.audio_list = Path(audio_list)
 
-        self._parse_feature_config()
-        self.transform = torchaudio.transform.MelSpectrogram(
+        self.transform = torchaudio.transforms.MelSpectrogram(
             sample_rate=44100,
             n_fft=2048,
             hop_length=512,
             f_min=27.5,
             f_max=16000,
             n_mels=80
-        )
+        ).cuda()
 
         self._load_data()
 
@@ -30,13 +29,14 @@ class EvalDataset(torch.utils.data.Dataset):
         self.onset_list = defaultdict()
         with tqdm(json.load(open(self.audio_list)), unit="audio") as t:
             for audio_dir in t:
-                audio_path = self.audio_dir / "vocals.wav"
-                label_path = self.audio_dir / f"{self.audio_dir.name}_groundtruth.txt"
+                audio_dir = Path(audio_dir)
+                audio_path = audio_dir / "vocals.wav"
+                label_path = audio_dir / f"{self.audio_dir.name}_groundtruth.txt"
 
                 audio, sr = torchaudio.load(audio_path)
                 audio = audio.sum(0).view(-1)
 
-                self.spectrogram = self.transform(audio)
+                self.spectrogram = self.transform(audio.cuda()).detach().cpu()
 
                 self.onset_list[audio_dir.name] = get_onset_list(label_path)
 
