@@ -20,6 +20,9 @@ class Dataset(torch.utils.data.Dataset):
         self.feature_config = Path(feature_config)
         # self.model_down_sampling_rate = model_down_sampling_rate
 
+        self.frame_hop = 1
+        self.frame_width = 15
+
         self.data = []
 
         self._parse_feature_config()
@@ -62,7 +65,7 @@ class Dataset(torch.utils.data.Dataset):
 
         segment_frame = self.sr * self.segment_length
         # target_frame = self._get_target_frame()
-        target_frame = 86
+        # target_frame = 86
 
         with tqdm(json.load(open(self.data_json)), unit="audio") as t:
             t.set_description("Loading audios")
@@ -74,7 +77,7 @@ class Dataset(torch.utils.data.Dataset):
 
                 audio, _ = torchaudio.load(str(audio_path))
                 label = pd.read_csv(label_path, sep=" ", header=None, names=["start", "end", "pitch"])
-                onset_list = get_onset_list(label, self.thres)
+                onset_list = get_onset_list(label, 0.032)
                 
                 audio = audio.sum(0).view(-1)
                 audio_length = audio.size(0) / 44100
@@ -83,7 +86,7 @@ class Dataset(torch.utils.data.Dataset):
 
                 self.data.append(spectrogram)
 
-                idxs = parse_index(i, onset_list, spectrogram.size(1), audio_length)
+                idxs = self.parse_index(i, onset_list, spectrogram.size(1), audio_length)
                 self.index.extend(idxs)
 
                 # if i == 5:
@@ -117,36 +120,34 @@ class Dataset(torch.utils.data.Dataset):
         # return self.max_index
         return len(self.index)
 
-def parse_index(audio_id, onset_list, n_frames, audio_length):
-    result = []
-    frame_width = audio_length / n_frames
-    frame_times = np.array([i * frame_width for i in range(15)])
+    def parse_index(self, audio_id, onset_list, n_frames, audio_length):
+        result = []
+        frame_width = audio_length / n_frames
+        frame_times = np.array([i * frame_width for i in range(self.frame_width)])
 
-    onset_idx = 0
-    for i in range(0, n_frames - 15 + 1):
+        center_idx = math.ceil(self.frame_width / 2) - 1
 
-        while onset_list[onset_idx] < frame_times[0] and onset_idx < len(onset_list) - 1:
-            onset_idx += 1
+        onset_idx = 0
+        dont_add = 0
+        for i in range(0, n_frames - self.frame_width + 1, self.frame_hop):
+            if dont_add > 0:
+                dont_add -= 1
+                continue
 
-        if onset_list[onset_idx] >= frame_times[10] or onset_list[onset_idx] < frame_times[5]:
-            target = 0
-        else:
-            idx = 0
-            for j in range(5, 10):
-                if onset_list[onset_idx] >= frame_times[j] and onset_list[onset_idx] < frame_times[j + 1]:
-                    idx = j
-                    break
+            while onset_list[onset_idx] < frame_times[0] and onset_idx < len(onset_list) - 1:
+                onset_idx += 1
 
-            if idx == 7:
-                target = 1
-            elif idx == 6 or idx == 8:
-                target = 0.6
-            elif idx == 5 or idx == 9:
-                target = 0.2
-            else: target = 0
+            if onset_list[onset_idx] < frame_times[center_idx] or onset_list[onset_idx] >= frame_times[center_idx + self.frame_hop]:
+                result.append([audio_id, i, i + self.frame_width, 0])
+            else:
+                result[-2][-1] = 0.2
+                result[-1][-1] = 0.6
+                result.append([audio_id, i, i + self.frame_width, 1])
+                result.append([audio_id, i + self.frame_hop, i + self.frame_hop + self.frame_width, 0.6])
+                result.append([audio_id, i + 2 * self.frame_hop, i + 2 * self.frame_hop + self.frame_width, 0.2])
+                dont_add = 2
+            
+            frame_times += frame_width
 
-        result.append([audio_id, i, i + 15, target])
-        frame_times += frame_width
-
-    return result
+        return result
 
