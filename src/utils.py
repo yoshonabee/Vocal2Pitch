@@ -53,6 +53,7 @@ def get_make_result_args(parser):
     parser.add_argument("--output_dir", type=str, default=".")
     parser.add_argument("--alpha", type=float, default=0.2)
     parser.add_argument("--min_onset_offset_thres", type=float, default=0.032)
+    parser.add_argument("--min_pitch", type=int, default=35)
 
     return parser
 
