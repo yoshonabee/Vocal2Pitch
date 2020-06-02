@@ -39,15 +39,27 @@ def get_training_args(parser):
 def get_predicting_args(parser):
     parser.add_argument("audio_list")
     parser.add_argument("model_path")
+    parser.add_argument("--output_dir", type=str, default=".")
     parser.add_argument("--thres", type=float, default=0.5)
     parser.add_argument("--seed", type=int, default=39)
     parser.add_argument("--batch_size", type=int, default=512)
     parser.add_argument("--device", type=str, default="cuda:0")
+    
+    return parser
+
+def get_make_result_args(parser):
+    parser.add_argument("pred_onset_list")
+    parser.add_argument("audio_dir")
+    parser.add_argument("--output_dir", type=str, default=".")
+    parser.add_argument("--alpha", type=float, default=0.2)
+    parser.add_argument("--min_onset_offset_thres", type=float, default=0.032)
+
     return parser
 
 def get_evaluating_args(parser):
     parser.add_argument("predict_json")
     parser.add_argument("data_dir")
+    
     return parser
 
 def set_seed(seed):
