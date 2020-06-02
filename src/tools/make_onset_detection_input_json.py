@@ -9,6 +9,7 @@ def get_args():
     parser.add_argument("output_dir", type=str)
     parser.add_argument("--val_set_size", type=int, default=50)
     parser.add_argument("--seed", type=int, default=39)
+    parser.add_argument("--test", action="store_true")
 
     return parser.parse_args()
 
@@ -23,16 +24,18 @@ def main(args: dict) -> None:
         for audio_dir in data_dir.glob("*")
         if audio_dir.is_dir()
         and (audio_dir / "vocals.wav").exists()
-        and (audio_dir / f"{audio_dir.name}_groundtruth.txt").exists()
+        and ((audio_dir / f"{audio_dir.name}_groundtruth.txt").exists() or args.test)
     ]
 
     random.shuffle(audio_list)
-
-    val_audio_list = audio_list[:args.val_set_size]
-    train_audio_list = audio_list[args.val_set_size:]
-
-    json.dump(train_audio_list, (output_dir / "train.json").open("w"))
-    json.dump(val_audio_list, (output_dir / "val.json").open("w"))
+    if args.test:
+        json.dump(audio_list, (output_dir / "test.json").open('w'))
+    else:
+        val_audio_list = audio_list[:args.val_set_size]
+        train_audio_list = audio_list[args.val_set_size:]
+   
+        json.dump(train_audio_list, (output_dir / "train.json").open("w"))
+        json.dump(val_audio_list, (output_dir / "val.json").open("w"))
 
 if __name__ == '__main__':
     args = get_args()

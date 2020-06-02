@@ -136,10 +136,10 @@ class Dataset(torch.utils.data.Dataset):
             while onset_list[onset_idx] < frame_times[0] and onset_idx < len(onset_list) - 1:
                 onset_idx += 1
 
-            start_idx = (self.frame_width // 2) + 3 * self.frame_hop
-            end_idx = (self.frame_width // 2) - 2 * self.frame_hop
+            start_idx = (self.frame_width // 2) - 2 * self.frame_hop
+            end_idx = (self.frame_width // 2) + 3 * self.frame_hop
 
-            if onset_list[onset_idx] >= frame_times[start_idx] or onset_list[onset_idx] < frame_times[end_idx]:
+            if onset_list[onset_idx] >= frame_times[end_idx] or onset_list[onset_idx] < frame_times[start_idx]:
                 target = 0
             else:
                 for j in range(start_idx, end_idx):

@@ -48,6 +48,7 @@ def get_predicting_args(parser):
 def get_evaluating_args(parser):
     parser.add_argument("predict_json")
     parser.add_argument("data_dir")
+    return parser
 
 def set_seed(seed):
     import random

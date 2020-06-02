@@ -34,9 +34,10 @@ class EvalDataset(torch.utils.data.Dataset):
         audio = audio.sum(0).view(-1)
 
         self.spectrogram = self.transform(audio.cuda()).detach().cpu()
-
-        label = pd.read_csv(label_path, sep=" ", header=None, names=["start", "end", "pitch"])
-        self.onset_list = get_onset_list(label, 0.03)
+        
+        if label_path.exists():
+            label = pd.read_csv(label_path, sep=" ", header=None, names=["start", "end", "pitch"])
+            self.onset_list = get_onset_list(label, 0.03)
 
         frame_time = (audio.size(0) / sr) / self.spectrogram.size(1)
 

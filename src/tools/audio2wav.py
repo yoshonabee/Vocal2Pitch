@@ -5,7 +5,7 @@ import subprocess
 from multiprocessing import Pool
 
 import librosa
-
+import torchaudio
 from tqdm import tqdm
 
 MIXTURE_INDEX = 0
@@ -39,15 +39,18 @@ def main(args):
 
     audio_list = [
         (
-            audio_dir / f"{audio_dir.name}.m4a",
-            audio_dir / f"{audio_dir.name}.wav",
+            audio_dir / f"vocals.wav",
+            audio_dir / f"vocal.wav",
             args.sample_rate
         ) 
         for audio_dir in data_dir.glob("*")
+        if (audio_dir / "vocals.wav").exists() and torchaudio.info(str(audio_dir / "vocals.wav"))[0].channels == 2
         # for audio in audio_dir.glob(f"{audio_dir.name}.*")
         # for audio in audio_dir.glob(f"{audio_dir.name}.*")
         # if audio_dir.name.isdigit() and audio.suffix.strip('.') in ("wav", "m4a", "aac", "mp3")
     ]
+
+    print(len(audio_list))
 
     p = Pool(args.concurrency)
 

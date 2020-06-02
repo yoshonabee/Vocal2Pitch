@@ -2,7 +2,7 @@
 	"domain": "mfcc",
 	"sr": 44100,
 	"segment_length": 4,
-	"thres": 0.03,
+	"thres": 0.3,
     "n_mfcc": 80,
 	"n_fft": 2048,
     "log_mels": false,

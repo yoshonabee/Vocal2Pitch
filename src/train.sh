@@ -3,6 +3,6 @@ python3 train.py \
     --model_config config/model14.json \
     --feature_config config/feature4.json \
     --weight_decay 0 \
-    --lr 0.001 \
-    --batch_size 512 \
-    --name new_one_test_2
+    --lr 0.0001 \
+    --batch_size 1024 \
+    --name framehop1_width15_2layer

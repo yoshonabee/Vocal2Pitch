@@ -27,11 +27,11 @@ def main(args):
             pred = np.array(predict_json[name])
             gt_path = data_dir / name / f"{name}_groundtruth.txt"
 
-            gt = pd.read_csv(gt_path, sep=" ", header=None).values()
+            gt = pd.read_csv(gt_path, sep=" ", header=None).values
 
             assert pred.shape[1] == gt.shape[1]
 
-            con, conp, conpoff = evaluate(pred, target)
+            con, conp, conpoff = evaluate(pred, gt)
 
             total_COn += con
             total_COnP += conp
@@ -40,13 +40,13 @@ def main(args):
             t.update(1)
 
     print(f"total audios: {len(predict_json)}")
-    print(f"total COn: {total_COn}")
-    print(f"total COnP: {total_COnP}")
-    print(f"total COnPOff: {total_COnPOff}")
-    print(f"total score: {total_COn * 0.2 + total_COnP * 0.6 + total_COnPOff * 0.2}")
+    print(f"COn: {total_COn / len(predict_json)}")
+    print(f"COnP: {total_COnP / len(predict_json)}")
+    print(f"COnPOff: {total_COnPOff / len(predict_json)}")
+    print(f"score: {(total_COn * 0.2 + total_COnP * 0.6 + total_COnPOff * 0.2) / len(predict_json)}")
 
 def evaluate(pred, target):
-    i, j, tp = 0, 0, 0
+    i, j, con_tp, conp_tp, conpoff_tp = 0, 0, 0, 0, 0
 
     while i < len(pred) and j < len(target):
 
@@ -60,7 +60,7 @@ def evaluate(pred, target):
             if pred[i][2] == target[j][2]:
                 conp_tp += 1
 
-                if abs(pred[i][1] - target[j][1]) <= 0.05:
+                if abs(pred[i][1] - target[j][1]) <= max(0.05, 0.2 * (target[j][1] - target[j][0])):
                     conpoff_tp += 1
 
             i += 1

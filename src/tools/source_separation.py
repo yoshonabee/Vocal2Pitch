@@ -17,8 +17,10 @@ def main(args):
     audio_list = [
         audio_dir / f"{audio_dir.name}.wav"
         for audio_dir in data_dir.glob("*")
-        if (audio_dir / f"{audio_dir.name}.wav").exists()
+        if (audio_dir / f"{audio_dir.name}.wav").exists() and not (audio_dir / "vocals.wav").exists()
     ]
+
+    print(len(audio_list))
 
     command = ["spleeter", "separate", "-i"]
     for audio in audio_list:
