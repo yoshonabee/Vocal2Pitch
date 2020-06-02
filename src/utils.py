@@ -4,6 +4,7 @@ def get_general_args(parser):
     parser.add_argument("--task", default="onset_offset_detection", choices=['onset_offset_detection'])
     parser.add_argument("--seed", type=float, default=39)
     parser.add_argument("-j", "--num_workers", type=int, default=0)
+    group.add_argument("--device", type=str, default="cuda:0")
 
     return parser
 
@@ -19,7 +20,7 @@ def get_data_args(parser):
 def get_model_args(parser):
     group = parser.add_argument_group("model")
 
-    group.add_argument("--model_config", type=str, default="config/model.json")
+    group.add_argument("--model_config", type=str)
     group.add_argument("--in_channel", type=int, default=1)
     group.add_argument("--batchnorm", action='store_true')
     group.add_argument("--dropout", type=float, default=0)
@@ -29,8 +30,7 @@ def get_model_args(parser):
 
 def get_training_args(parser):
     group = parser.add_argument_group("training")
-
-    group.add_argument("--device", type=str, default="cuda:0")  
+  
     group.add_argument("--batch_size", type=int, default=128) 
     group.add_argument("--lr", type=float, default=0.001)
     group.add_argument("--epochs", type=int, default=100)
@@ -42,6 +42,12 @@ def get_training_args(parser):
     group.add_argument("--checkpoint", type=int, default=5)
 
     return parser
+
+def get_predicting_args(parser):
+    group = parser.add_argument_group("predicting")
+    group.add_argument("audio_list")
+    group.add_argument("model_path")
+    group.add_argument("--output_dir", ".")
 
 def set_seed(seed):
     import random
