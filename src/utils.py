@@ -58,9 +58,10 @@ def get_make_result_args(parser):
     parser.add_argument("data_dir")
     parser.add_argument("--output_dir", type=str, default=".")
     parser.add_argument("--alpha", type=float, default=0.2)
-    parser.add_argument("--min_onset_offset_thres", type=float, default=0.032)
-    parser.add_argument("--min_pitch", type=int, default=35)
-    parser.add_argument("--confident_thres", type=float, default=0.35)
+    parser.add_argument("--min_pitch", type=int, default=50)
+    parser.add_argument("--max_pitch", type=int, default=80)
+    parser.add_argument("--onset_thres", type=float, default=0.35)
+    parser.add_argument("--offset_thres", type=float, default=0.35)
     return parser
 
 def get_evaluating_args(parser):

@@ -5,16 +5,27 @@ from pathlib import Path
 
 import json
 import math
-import torch
+
 from model import CNN
 
 import numpy as np
+import torch
 
 from data import EvalDataset
 from utils import get_make_result_args
 
 from tqdm import tqdm
 
+def find_max_c(ts):
+    max_c = 0
+    max_t = 0
+
+    for t, c in ts:
+        if c > max_c:
+            max_c = c
+            max_t = t
+
+    return max_t
 
 def main(args):
 
@@ -29,12 +40,45 @@ def main(args):
                 pred_onset_list[name] = []
 
         else:
-            new_pred_onset_list = []
-            for t, pred in pred_onset_list[name]:
-                if pred >= args.confident_thres:
-                    new_pred_onset_list.append(t)
+            segments = []
+            segment = []
 
-            pred_onset_list[name] = new_pred_onset_list
+            onset_ts = []
+            offset_ts = []
+
+            for t, pred in pred_onset_list[name]:
+                if pred >= args.onset_thres:
+                    onset_ts.append([t, pred])
+
+                    if len(offset_ts) > 0:
+                        offset_ts = []
+
+                elif pred >= args.offset_thres:
+                    offset_ts.append(t, pred)
+                else:
+                    if len(onset_ts) > 0:
+                        onset = find_max_c(onset_ts)
+                        segment.append(onset)
+
+                        if len(segment) == 2:
+                            segments.append(segment)
+                            segment = [onset + 1e-6]
+
+                        onset_ts = []
+                        offset_ts = []
+                    elif len(offset_ts) > 0:
+                        if len(segment) == 1:
+                            offset = find_max_c(offset_ts)
+                            segment.append(offset)
+                            segments.append(segment)
+                            segment = []
+
+                        onset_ts = []
+                        offset_ts = []
+
+
+
+            pred_onset_list[name] = segments
 
 
 
@@ -55,12 +99,7 @@ def main(args):
             result = []
 
             pitch_list_idx = 0
-            for i in range(1, len(pred_onset_list[name])):
-                onset = pred_onset_list[name][i - 1]
-                offset = pred_onset_list[name][i]
-
-                if offset - onset <= args.min_onset_offset_thres:
-                    continue
+            for onset, offset in pred_onset_list[name]:
                 try:
                     while pitch_list[pitch_list_idx][0] < onset * (1 - args.alpha) + offset * args.alpha:
                         pitch_list_idx += 1
@@ -77,12 +116,12 @@ def main(args):
                 
                 try:          
 
-                    t = pitch_list[start_idx:end_idx,0]
-                    pitch = pitch_list[start_idx:end_idx,1]
+                    t = pitch_list[start_idx:end_idx, 0]
+                    pitch = pitch_list[start_idx:end_idx, 1]
 
                     final_pitch = round(pitch.dot(t - t.min()) / (t - t.min()).sum())
 
-                    if final_pitch >= args.min_pitch:
+                    if final_pitch >= args.min_pitch and final_pitch <= args.max_pitch:
                         result.append([onset, offset, final_pitch])
                 except:
                     from IPython import embed
