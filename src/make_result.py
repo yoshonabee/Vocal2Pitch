@@ -20,12 +20,13 @@ def main(args):
 
     pred_onset_list = json.load(open(args.pred_onset_list))
     onset_list_length = 500 if len(pred_onset_list) <= 500 else 1500
-
-    for i in range(onset_list_length):
+    
+    for i in range(1, onset_list_length + 1):
         name = str(i)
-
+        
         if name not in pred_onset_list:
-            pred_onset_list[name] = []
+            if "test" in args.pred_onset_list:
+                pred_onset_list[name] = []
 
         else:
             new_pred_onset_list = []
@@ -37,8 +38,8 @@ def main(args):
             pred_onset_list[name] = new_pred_onset_list
 
 
-
-    pred_onset_list = dict(sorted(list(pred_onset_list.items(), key=lambda x: int(x[0]))))
+    print(len(pred_onset_list))
+    pred_onset_list = dict(sorted(list(pred_onset_list.items()), key=lambda x: int(x[0])))
 
     print(len(pred_onset_list))
 
@@ -59,7 +60,7 @@ def main(args):
                 onset = pred_onset_list[name][i - 1]
                 offset = pred_onset_list[name][i]
 
-                if offset - onset <= args.min_onset_offset_thres:
+                if offset - (onset * (1 - args.alpha) + offset * args.alpha) <= args.min_onset_offset_thres:
                     continue
                 try:
                     while pitch_list[pitch_list_idx][0] < onset * (1 - args.alpha) + offset * args.alpha:
@@ -81,7 +82,6 @@ def main(args):
                     pitch = pitch_list[start_idx:end_idx,1]
 
                     final_pitch = round(pitch.dot(t - t.min()) / (t - t.min()).sum())
-
                     if final_pitch >= args.min_pitch:
                         result.append([onset, offset, final_pitch])
                 except:
@@ -93,11 +93,11 @@ def main(args):
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
-    json.dump(results, open(output_dir / f"{model_name}_{args.audio_list.split('/')[-1].split('.')[0]}.json", "w"))
+    json.dump(results, open(output_dir / f"{args.pred_onset_list.split('/')[-1].split('.')[0]}_result.json", "w"))
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser = get_predicting_args(parser)
+    parser = get_make_result_args(parser)
     args = parser.parse_args()
 
     print(args)
