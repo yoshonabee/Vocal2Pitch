@@ -50,7 +50,7 @@ def main(args):
             val_dataloader,
             device=torch.device(args.device),
             loss_fn=ResampleCriterion(args.inbalance_ratio, args.criterion),
-            metrics=[Accuracy(), Precision(), Recall(), F1()],
+            metrics=[Accuracy(args.criterion == "bceloss"), Precision(args.criterion == "bceloss"), Recall(args.criterion == "bceloss"), F1(args.criterion == "bceloss")],
             lr=args.lr,
             optimizer=optimizer,
             epochs=args.epochs,

@@ -21,15 +21,15 @@ def main(args):
     pred_onset_list = json.load(open(args.pred_onset_list))
     onset_list_length = 500 if len(pred_onset_list) <= 500 else 1500
 
-    for i in range(onset_list_length):
+    for i in range(1, onset_list_length + 1):
         name = str(i)
 
         if name not in pred_onset_list:
-            pred_onset_list[name] = []
+            if "test" in args.pred_onset_list:
+                pred_onset_list[name] = []
 
         else:
             new_pred_onset_list = []
-
             for t, pred in pred_onset_list[name]:
                 if pred >= args.confident_thres:
                     new_pred_onset_list.append(t)
@@ -38,7 +38,7 @@ def main(args):
 
 
 
-    pred_onset_list = dict(sorted(list(pred_onset_list.items(), key=lambda x: int(x[0]))))
+    pred_onset_list = dict(sorted(list(pred_onset_list.items()), key=lambda x: int(x[0])))
 
     print(len(pred_onset_list))
 
@@ -93,11 +93,11 @@ def main(args):
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
-    json.dump(results, open(output_dir / f"{model_name}_{args.audio_list.split('/')[-1].split('.')[0]}.json", "w"))
+    json.dump(results, open(output_dir / f"{args.pred_onset_list.split('/')[-1][:-5]}_result.json", "w"))
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser = get_predicting_args(parser)
+    parser = get_make_result_args(parser)
     args = parser.parse_args()
 
     print(args)

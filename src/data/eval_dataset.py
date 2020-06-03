@@ -22,7 +22,7 @@ class EvalDataset(torch.utils.data.Dataset):
     def load_data(self):
         self.data = []
 
-        audio_path = self.audio_dir / f"vocal.wav"
+        audio_path = self.audio_dir / f"vocals.wav"
 
         audio, _ = librosa.load(audio_path, sr=self.sr)
 

@@ -43,11 +43,13 @@ class CNN(nn.Module):
                 nn.BatchNorm1d(self.channels[i - 1]),
                 nn.Conv1d(self.channels[i - 1], self.channels[i], self.kernel_size[i], self.strides[i], paddings, bias=False),
                 nn.ReLU(),
-                nn.Dropout(self.dropout)
             ])
-
+        layers.append(nn.Dropout(0.5))
         self.cnn = nn.Sequential(*layers)
-        self.classifier = nn.Linear(self.channels[-1], 2)
+        self.classifier = nn.Sequential(
+            nn.Linear(self.channels[-1], 1),
+            nn.Sigmoid()
+        )
 
     @property
     def down_sampling_factor(self):

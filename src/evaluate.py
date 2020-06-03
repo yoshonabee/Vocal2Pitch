@@ -24,13 +24,15 @@ def main(args):
         total_COnPOff = 0
 
         for name in predict_json:
+            if len(predict_json[name]) == 0:
+                continue
+
             pred = np.array(predict_json[name])
             gt_path = data_dir / name / f"{name}_groundtruth.txt"
 
             gt = pd.read_csv(gt_path, sep=" ", header=None).values
 
             assert pred.shape[1] == gt.shape[1]
-
             con, conp, conpoff = evaluate(pred, gt)
 
             total_COn += con

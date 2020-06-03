@@ -26,10 +26,11 @@ class ResampleCriterion(DefaultCriterion):
 
         loss = self.criterion(resampled_pred, resampled_y)
 
-        return loss, pred, y
+        return loss, resampled_pred, resampled_y
 
     def resample(self, pred, y):
-        r_pred = pred.view(-1, pred.size(-1))
+        #r_pred = pred.view(-1, pred.size(-1))
+        r_pred = pred.view(-1)
         r_y = y.view(-1)
 
         if self.inbalance_ratio <= 0:

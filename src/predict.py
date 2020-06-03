@@ -8,11 +8,11 @@ import math
 import torch
 
 import numpy as np
-
+from model import CNN
 from utils import get_predicting_args, get_model_args, get_data_args, set_seed
 
 from tqdm import tqdm
-
+from data import EvalDataset
 
 def main(args):
     model_config = json.load(open(args.model_config, 'r'))
@@ -23,7 +23,7 @@ def main(args):
 
     model.load_state_dict(torch.load(args.model_path, map_location="cpu"))
     model_name = args.model_path.split("/")[-2]
-
+    split = args.audio_list.split("/")[-1].split(".")[0]
     pred_onset_list = defaultdict(list)
 
     model.to(args.device)
@@ -53,13 +53,15 @@ def main(args):
 
                     # pred_onset_list[audio_dir.name].extend(list(zip(idx, pred)))
 
-                    pred = model(x).max(-1)[1].cpu()
-                    time_frames = np.array([i for i in range(0, args.segment_length / pred.size(1))])
+                    pred = model(x).view(x.size(0), -1).cpu().numpy()
+                    
+                    time_frames = np.array([i for i in range(0, int(pred.shape[1] * args.segment_length), args.segment_length)])
+                    time_frames = time_frames / pred.shape[1]
+                    
+                    for start_time, batch in zip(idx.view(-1).numpy(), pred):
+                        times = time_frames + start_time
 
-                    for start_time, batch in zip(idx.view(-1).numpy(), pred.numpy()):
-                        idx = time_frames + start_time
-
-                        pred_onset_list[audio_dir.name].extend(list(zip(idx.tolist(), batch.tolist())))
+                        pred_onset_list[audio_dir.name].extend(list(zip(times.tolist(), batch.tolist())))
 
     for name in pred_onset_list:
         pred_onset_list[name] = sorted(pred_onset_list[name], key=lambda x: float(x[0]))
@@ -69,7 +71,7 @@ def main(args):
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
 
-    with (output_dir / f"{model_name}.json").open("w") as f:
+    with (output_dir / f"{model_name}_{split}.json").open("w") as f:
         f.write(json.dumps(pred_onset_list))
 
 if __name__ == "__main__":

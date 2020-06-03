@@ -4,7 +4,7 @@ def get_general_args(parser):
     parser.add_argument("--task", default="onset_offset_detection", choices=['onset_offset_detection'])
     parser.add_argument("--seed", type=float, default=39)
     parser.add_argument("-j", "--num_workers", type=int, default=0)
-    group.add_argument("--device", type=str, default="cuda:0")
+    parser.add_argument("--device", type=str, default="cuda:0")
 
     return parser
 
@@ -47,7 +47,27 @@ def get_predicting_args(parser):
     group = parser.add_argument_group("predicting")
     group.add_argument("audio_list")
     group.add_argument("model_path")
-    group.add_argument("--output_dir", ".")
+    group.add_argument("--output_dir", default=".")
+    group.add_argument("--seed", default=39, type=int)
+    group.add_argument("--device", default="cuda:0")
+    group.add_argument("--batch_size", default=256, type=int)
+    return parser
+
+def get_make_result_args(parser):
+    parser.add_argument("pred_onset_list")
+    parser.add_argument("data_dir")
+    parser.add_argument("--output_dir", type=str, default=".")
+    parser.add_argument("--alpha", type=float, default=0.2)
+    parser.add_argument("--min_onset_offset_thres", type=float, default=0.032)
+    parser.add_argument("--min_pitch", type=int, default=35)
+    parser.add_argument("--confident_thres", type=float, default=0.35)
+    return parser
+
+def get_evaluating_args(parser):
+    parser.add_argument("predict_json")
+    parser.add_argument("data_dir")
+
+    return parser
 
 def set_seed(seed):
     import random

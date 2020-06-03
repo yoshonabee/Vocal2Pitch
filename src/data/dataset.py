@@ -29,7 +29,7 @@ class Dataset(torch.utils.data.Dataset):
             t.set_description("Loading audios")
             for audio_dir in t:
                 audio_dir = Path(audio_dir)
-                audio_path = audio_dir / f"vocal.wav"
+                audio_path = audio_dir / f"vocals-16k.wav"
                 label_path = audio_dir / f"{audio_dir.name}_groundtruth.txt"
 
                 audio, _ = librosa.load(audio_path, sr=self.sr)
@@ -53,7 +53,7 @@ class Dataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         audio, target = self.data[index]
 
-        return torch.tensor(audio).float(), target.long()
+        return torch.tensor(audio).float(), target.float()
 
     def __len__(self):
         return len(self.data)
