@@ -20,7 +20,7 @@ class EvalDataset(torch.utils.data.Dataset):
             hop_length=512,
             f_min=27.5,
             f_max=16000,
-            n_mels=80
+            n_mels=120
         ).cuda()
 
         self._load_data()
@@ -41,10 +41,10 @@ class EvalDataset(torch.utils.data.Dataset):
 
         frame_time = (audio.size(0) / sr) / self.spectrogram.size(1)
 
-        self.frame_time = [(i + 7) * frame_time for i in range(self.spectrogram.size(1) - 15 + 1)]
+        self.frame_time = [(i + 15) * frame_time for i in range(self.spectrogram.size(1) - 31 + 1)]
 
     def __getitem__(self, index):
-        return self.spectrogram[:,index:index + 15].float(), self.frame_time[index]
+        return self.spectrogram[:,index:index + 31].float(), self.frame_time[index]
 
     def __len__(self):
         return len(self.frame_time)

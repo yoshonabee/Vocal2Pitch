@@ -49,11 +49,12 @@ def get_predicting_args(parser):
 
 def get_make_result_args(parser):
     parser.add_argument("pred_onset_list")
-    parser.add_argument("audio_dir")
+    parser.add_argument("data_dir")
     parser.add_argument("--output_dir", type=str, default=".")
     parser.add_argument("--alpha", type=float, default=0.2)
     parser.add_argument("--min_onset_offset_thres", type=float, default=0.032)
     parser.add_argument("--min_pitch", type=int, default=35)
+    parser.add_argument("--confident_thres", type=float, default=0.35)
 
     return parser
 

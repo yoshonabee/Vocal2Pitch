@@ -22,7 +22,7 @@ class Dataset(torch.utils.data.Dataset):
         # self.model_down_sampling_rate = model_down_sampling_rate
 
         self.frame_hop = 1
-        self.frame_width = 15
+        self.frame_width = 31
 
         assert self.frame_hop % 2 == 1
 
@@ -45,7 +45,7 @@ class Dataset(torch.utils.data.Dataset):
     #         return int(((self.sr * self.segment_length) / self.hop_length + 1) // self.model_down_sampling_rate)
 
     def _get_transform(self):
-        return torchaudio.transforms.MelSpectrogram(44100, 2048, hop_length=512, f_min=27.5, f_max=16000, n_mels=80).cuda()
+        return torchaudio.transforms.MelSpectrogram(44100, 2048, hop_length=512, f_min=27.5, f_max=16000, n_mels=120).cuda()
         if self.domain == "time":
             return lambda x: x
         elif self.domain == "spectrogram":
@@ -93,9 +93,24 @@ class Dataset(torch.utils.data.Dataset):
 
                 idxs = self.parse_index(i, onset_list, spectrogram.size(1), audio_length)
                 self.index.extend(idxs)
-
+                
                 #if i == 5:
-                #     break
+                #    break
+
+        with torch.no_grad():
+            mean = torch.zeros(120).float().cuda()
+            std = torch.zeros(120).float().cuda()
+            total = 0
+            for i in range(len(self.data)):
+                mean += self.data[i].cuda().mean(1) * self.data[i].size(1)
+                std += self.data[i].cuda().std(1) * self.data[i].size(1)
+                total += self.data[i].size(1)
+
+            mean = (mean / total).unsqueeze(1)
+            std = (std / total).unsqueeze(1)
+
+            for i in range(len(self.data)):
+                self.data[i] = ((self.data[i].cuda() - mean) / std).cpu()
 
             # self.index = sorted(self.index, key=lambda x: -x[-1])
 
@@ -131,7 +146,7 @@ class Dataset(torch.utils.data.Dataset):
         frame_times = np.array([i * frame_width for i in range(self.frame_width)])
 
         onset_idx = 0
-        for i in range(0, n_frames - self.frame_width + 1):
+        for i in range(0, n_frames - self.frame_width - self.frame_hop // 2 + 1, self.frame_hop):
 
             while onset_list[onset_idx] < frame_times[0] and onset_idx < len(onset_list) - 1:
                 onset_idx += 1

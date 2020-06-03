@@ -23,10 +23,10 @@ class CNN(nn.Module):
             [
                 nn.Sequential(
                     nn.ReLU(),
-                    nn.BatchNorm2d(60)
+                    nn.BatchNorm2d(60),
                     nn.Conv2d(60, 60, (3, 3), 1, (1, 1)),
                 )
-                for i in range(5)
+                for i in range(3)
             ]
         )
 
@@ -39,7 +39,7 @@ class CNN(nn.Module):
         self.net = nn.Sequential(*layers)
 
         self.out = nn.Sequential(
-            nn.Linear(3360, 256),
+            nn.Linear(16560, 256),
             nn.ReLU(),
             nn.Linear(256, 1),
             nn.Sigmoid()

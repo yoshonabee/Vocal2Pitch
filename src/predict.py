@@ -6,7 +6,8 @@ from pathlib import Path
 import json
 import math
 import torch
-
+from model import CNN
+from data import EvalDataset
 import numpy as np
 
 from utils import get_predicting_args, set_seed
@@ -18,6 +19,7 @@ def main(args):
     model = CNN()
     model.load_state_dict(torch.load(args.model_path, map_location="cpu"))
     model_name = args.model_path.split("/")[-2]
+    split_name = args.audio_list.split("/")[-1].split(".")[0]
 
     pred_onset_list = defaultdict(list)
 
@@ -49,7 +51,7 @@ def main(args):
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
 
-    with (output_dir / f"{model_name}.json").open("w") as f:
+    with (output_dir / f"{model_name}_{split_name}.json").open("w") as f:
         f.write(json.dumps(pred_onset_list))
 
 if __name__ == "__main__":
