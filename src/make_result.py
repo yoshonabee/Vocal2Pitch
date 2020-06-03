@@ -31,9 +31,14 @@ def main(args):
         else:
             new_pred_onset_list = []
 
+            ts = []
             for t, pred in pred_onset_list[name]:
                 if pred >= args.confident_thres:
-                    new_pred_onset_list.append(t)
+                    ts.append(t)
+                else:
+                    if len(ts) != 0:
+                        new_pred_onset_list.append(np.array(ts).mean())
+                        ts = []
 
             pred_onset_list[name] = new_pred_onset_list
 
@@ -93,7 +98,8 @@ def main(args):
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
-    json.dump(results, open(output_dir / f"{args.pred_onset_list.split('/')[-1].split('.')[0]}_result.json", "w"))
+    
+    json.dump(results, open(output_dir / f"{model_name}_{args.audio_list.split('/')[-1][:-5]}_result.json", "w"))
 
 if __name__ == "__main__":
     parser = ArgumentParser()
