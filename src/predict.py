@@ -8,7 +8,7 @@ import math
 import torch
 
 import numpy as np
-from model import CNN
+from model import CNN_RNN
 from utils import get_predicting_args, get_model_args, get_data_args, set_seed
 
 from tqdm import tqdm
@@ -16,7 +16,7 @@ from data import EvalDataset
 
 def main(args):
     model_config = json.load(open(args.model_config, 'r'))
-    model = CNN(
+    model = CNN_RNN(
         layers_config=model_config,
         dropout=args.dropout
     )

@@ -6,8 +6,6 @@ from pathlib import Path
 import json
 import math
 
-from model import CNN
-
 import numpy as np
 import torch
 
