@@ -88,7 +88,15 @@ def main(args):
         for name in t:
             audio_dir = data_dir / name
 
-            pitch_list = np.array(json.load(open(audio_dir / f"{name}_vocal.json")))
+            if not args.crepe:
+                pitch_list = np.array(json.load(open(audio_dir / f"{name}_vocal.json")))
+            else:
+                raw_pitch_list = pd.read_csv(audio_dir / f"{name}_crepe.csv")
+                pitch_list = raw_pitch_list.values[:,:2]
+
+                for i in range(pitch_list.shape[0]):
+                    if raw_pitch_list['confidence'][i] < args.crepe_confidence_thres:
+                        pitch_list[i][1] = 0
 
             result = []
 
@@ -109,7 +117,6 @@ def main(args):
                         break
                 
                 try:          
-
                     t = pitch_list[start_idx:end_idx, 0]
                     pitch = pitch_list[start_idx:end_idx, 1]
 
