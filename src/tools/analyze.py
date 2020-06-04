@@ -59,16 +59,6 @@ def main(args):
                 
                 t = pred[:,0]
                 p = pred[:,1]
-                
-                mean = p.mean()
-                std = p.std()
-                p = (p - mean) / std
-                p = (p - p.min())
-                p = p / p.max()
-
-                print(p.min(), p.max())
-
-                print(mean, std)
 
                 ax2.plot(t, p, color="blue")
                 # line = LineCollection([[[0, mean], [300, mean]]], linestyle="solid", colors=["red"])
@@ -76,11 +66,12 @@ def main(args):
                 
             else:
                 ax2.set_ylim(50, 80)
-                points = np.array([(t[0], t[2]) for t in pred])
-                ax2.scatter(points[:,0], points[:,1], color="blue", s=1)
-
-                points = np.array([(t[1], t[2]) for t in pred])
-                ax2.scatter(points[:,0], points[:,1], color="green", s=1)
+                segments = np.array([[(t[0], 0), (t[0], 100)] for t in pred])
+                lines = LineCollection(segments, linestyle="solid", colors=["green"], linewidths=[1 for _ in range(len(segments))])
+                ax2.add_collection(lines)
+                segments = np.array([[(t[1], 0), (t[1], 100)] for t in pred])
+                lines = LineCollection(segments, linestyle="solid", colors=["red"], linewidths=[1 for _ in range(len(segments))])
+                ax2.add_collection(lines)
 
             
             
