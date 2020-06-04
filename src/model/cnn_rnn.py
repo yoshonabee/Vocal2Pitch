@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class CNN(nn.Module):
+class CNN_RNN(nn.Module):
     def __init__(self, channels=None, kernel_size=None, strides=None, dropout=None, layers_config=None):
         super(CNN, self).__init__()
 
@@ -46,8 +46,10 @@ class CNN(nn.Module):
             ])
         layers.append(nn.Dropout(0.5))
         self.cnn = nn.Sequential(*layers)
+        self.lstm = nn.LSTM(self.channels[-1], 128, layers=2)
+
         self.classifier = nn.Sequential(
-            nn.Linear(self.channels[-1], 1),
+            nn.Linear(128, 1),
             nn.Sigmoid()
         )
 
@@ -64,6 +66,8 @@ class CNN(nn.Module):
         x = x.unsqueeze(1) # (B, L) -> (B, 1, L)
         x = self.cnn(x) # (B, 1, L) -> (B, C, L // down_sampling_factor (L'))
         x = x.transpose(1, 2) # (B, C, L') -> (B, L', C)
-        out = self.classifier(x) # (B, L', C) -> (B, L', 2)
+
+        x, _ = self.lstm(x) # (B, L', C) -> (B, L', 128)
+        out = self.classifier(x) # (B, L', 128) -> (B, L', 1)
 
         return out
