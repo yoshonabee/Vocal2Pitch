@@ -33,7 +33,9 @@ def main(args):
             gt = pd.read_csv(gt_path, sep=" ", header=None).values
 
             assert pred.shape[1] == gt.shape[1]
+
             con, conp, conpoff = evaluate(pred, gt)
+            # print(name, len(pred), len(gt), con)
 
             total_COn += con
             total_COnP += conp

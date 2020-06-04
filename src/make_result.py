@@ -40,45 +40,41 @@ def main(args):
                 pred_onset_list[name] = []
 
         else:
+            pred_list = np.array(pred_onset_list[name])
+            times, preds = pred_list[:,0], pred_list[:,1]
+
             segments = []
             segment = []
 
-            onset_ts = []
-            offset_ts = []
+            ts = []
 
-            for t, pred in pred_onset_list[name]:
-                if pred >= args.onset_thres:
-                    onset_ts.append([t, pred])
+            last_onset = None
+            mean = preds.mean()
+            std = preds.std()
 
-                    if len(offset_ts) > 0:
-                        offset_ts = []
+            preds = (preds - mean) / std
+            preds = (preds - preds.min()) / (preds.max() - preds.min())
 
-                elif pred >= args.offset_thres:
-                    offset_ts.append(t, pred)
+            for t, pred in zip(times, preds):
+                if pred > args.onset_thres:
+                    ts.append(t)
                 else:
-                    if len(onset_ts) > 0:
-                        onset = find_max_c(onset_ts)
-                        segment.append(onset)
+                    if len(ts) > 0:
+                        offset = ts[0]
+                        onset = ts[-1]
 
-                        if len(segment) == 2:
-                            segments.append(segment)
-                            segment = [onset + 1e-6]
+                        if last_onset:
+                            if offset - last_onset >= 0.08:
+                                segments.append([last_onset, offset])
 
-                        onset_ts = []
-                        offset_ts = []
-                    elif len(offset_ts) > 0:
-                        if len(segment) == 1:
-                            offset = find_max_c(offset_ts)
-                            segment.append(offset)
-                            segments.append(segment)
-                            segment = []
+                        last_onset = onset
 
-                        onset_ts = []
-                        offset_ts = []
-
+                        ts = []
 
 
             pred_onset_list[name] = segments
+            # from IPython import embed
+            # embed()
 
 
 
@@ -109,7 +105,7 @@ def main(args):
                     while pitch_list[pitch_list_idx][0] < offset:
                         pitch_list_idx += 1
 
-                    end_idx =  pitch_list_idx
+                    end_idx = pitch_list_idx
                 except:
                     if pitch_list_idx >= len(pitch_list):
                         break
