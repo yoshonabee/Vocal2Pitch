@@ -62,6 +62,7 @@ def get_make_result_args(parser):
     parser.add_argument("--max_pitch", type=int, default=80)
     parser.add_argument("--onset_thres", type=float, default=0.35)
     parser.add_argument("--offset_thres", type=float, default=0.35)
+    parser.add_argument("--crepe", action="store_true")
     return parser
 
 def get_evaluating_args(parser):

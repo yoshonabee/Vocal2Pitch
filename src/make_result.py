@@ -96,7 +96,7 @@ def main(args):
 
                 for i in range(pitch_list.shape[0]):
                     if raw_pitch_list['confidence'][i] < args.crepe_confidence_thres:
-                        pitch_list[i][1] = 0
+                       pitch_list[i][1] = 27.5
 
             result = []
 
