@@ -6,10 +6,8 @@ from pathlib import Path
 import json
 import math
 
-from model import CNN
-
 import numpy as np
-import torch
+import pandas as pd
 
 from data import EvalDataset
 from utils import get_make_result_args
@@ -98,7 +96,7 @@ def main(args):
 
                 for i in range(pitch_list.shape[0]):
                     if raw_pitch_list['confidence'][i] < args.crepe_confidence_thres:
-                        pitch_list[i][1] = 0
+                        pitch_list[i][1] = 27.5
 
             result = []
 
@@ -118,11 +116,8 @@ def main(args):
                     if pitch_list_idx >= len(pitch_list):
                         break
                 
-                try:          
-                    t = pitch_list[start_idx:end_idx, 0]
-                    pitch = pitch_list[start_idx:end_idx, 1]
-
-                    final_pitch = round(pitch.dot(t - t.min()) / (t - t.min()).sum())
+                try:
+                    final_pitch = process_pitch_mean(pitch_list, start_idx, end_idx, freq2midi=args.crepe)          
 
                     if final_pitch >= args.min_pitch and final_pitch <= args.max_pitch:
                         result.append([onset, offset, final_pitch])
@@ -131,11 +126,52 @@ def main(args):
                     from time import sleep
                     embed()
                     sleep(3)
+
             results[name] = result
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
     json.dump(results, open(output_dir / f"{args.pred_onset_list.split('/')[-1][:-5]}_result.json", "w"))
+
+def process_pitch_classical(pitch_list, start_idx, end_idx, freq2midi=False):
+    t = pitch_list[start_idx:end_idx, 0]
+    pitch = pitch_list[start_idx:end_idx, 1]
+
+    final_pitch = pitch.dot(t - t.min()) / (t - t.min()).sum()
+
+    if freq2midi:
+        from audiolazy.lazy_midi import freq2midi
+
+        return round(freq2midi(final_pitch))
+    return round(final_pitch)
+
+def process_pitch_mean(pitch_list, start_idx, end_idx, freq2midi=False):
+    pitch = pitch_list[start_idx:end_idx, 1]
+
+    final_pitch = pitch.mean()
+
+    if freq2midi:
+        from audiolazy.lazy_midi import freq2midi
+
+        return round(freq2midi(final_pitch))
+    return round(final_pitch)
+
+def process_pitch_outlier(pitch_list, start_idx, end_idx, freq2midi=False):
+    pitch = pitch_list[start_idx:end_idx, 1]
+    mean = pitch.mean()
+    std = pitch.std()
+
+    pitch = np.array([p for p in pitch if (p - mean) / std <= 5])
+
+    final_pitch = pitch.mean()
+
+
+    if freq2midi:
+        from audiolazy.lazy_midi import freq2midi
+
+        return round(freq2midi(final_pitch))
+    return round(final_pitch)
+
 
 if __name__ == "__main__":
     parser = ArgumentParser()
