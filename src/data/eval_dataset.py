@@ -21,8 +21,11 @@ class EvalDataset(torch.utils.data.Dataset):
 
     def load_data(self):
         self.data = []
-
-        audio_path = self.audio_dir / f"vocals.wav"
+        
+        if (self.audio_dir / "vocals-16k.wav").exists():
+            audio_path = self.audio_dir / "vocals-16k.wav"
+        else:
+            audio_path = self.audio_dir / f"vocals.wav"
 
         audio, _ = librosa.load(audio_path, sr=self.sr)
 
