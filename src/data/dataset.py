@@ -31,6 +31,11 @@ class Dataset(torch.utils.data.Dataset):
                 audio_dir = Path(audio_dir)
                 audio_path = audio_dir / f"vocals-16k.wav"
                 label_path = audio_dir / f"{audio_dir.name}_groundtruth.txt"
+                feature_path = audio_dir / f"{audio_dir.name}_feature.json"
+
+                feature = json.load(open(feature_path))
+                del feature['time']
+                feature = zip(*list(feature.items()))
 
                 audio, _ = librosa.load(audio_path, sr=self.sr)
                 
@@ -48,12 +53,12 @@ class Dataset(torch.utils.data.Dataset):
                         onset_idx += 1
 
                     target = make_target_tensor(onsets, start_time, self.segment_length, self.target_length)
-                    self.data.append([audio[frame:frame + self.segment_frame], target])
+                    self.data.append([audio[frame:frame + self.segment_frame], feature[frame:frame + self.segment_frame], target])
 
     def __getitem__(self, index):
-        audio, target = self.data[index]
+        audio, feature, target = self.data[index]
 
-        return torch.tensor(audio).float(), target.float()
+        return torch.tensor(audio).float(), torch.tensor(feature).float(), target.float()
 
     def __len__(self):
         return len(self.data)
