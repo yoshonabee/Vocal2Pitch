@@ -44,13 +44,13 @@ class CNN_RNN(nn.Module):
                 nn.Conv1d(self.channels[i - 1], self.channels[i], self.kernel_size[i], self.strides[i], paddings, bias=False),
                 nn.ReLU(),
             ])
-        #layers.append(nn.Dropout(0.5))
+        layers.append(nn.Dropout(0.5))
         self.cnn = nn.Sequential(*layers)
-        self.lstm = nn.LSTM(self.channels[-1] + 22, 512, batch_first=True, bidirectional=True, num_layers=3)
+        self.lstm = nn.LSTM(self.channels[-1] + 22, 256, batch_first=True, bidirectional=True, num_layers=3)
 
         self.classifier = nn.Sequential(
             nn.ReLU(),
-            nn.Linear(1024, 1),
+            nn.Linear(512, 1),
             nn.Sigmoid()
         )
 

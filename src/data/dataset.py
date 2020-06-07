@@ -27,6 +27,7 @@ class Dataset(torch.utils.data.Dataset):
 
         with tqdm(json.load(open(self.data_json)), unit="audio") as t:
             t.set_description("Loading audios")
+            j = 0
             for audio_dir in t:
                 audio_dir = Path(audio_dir)
                 audio_path = audio_dir / f"vocals-16k.wav"
@@ -35,8 +36,8 @@ class Dataset(torch.utils.data.Dataset):
 
                 feature = json.load(open(feature_path))
                 del feature['time']
-                feature = zip(*list(feature.items()))
-
+                feature = pd.DataFrame(feature).values
+                
                 audio, _ = librosa.load(audio_path, sr=self.sr)
                 
                 label = pd.read_csv(label_path, sep=" ", header=None, names=["start", "end", "pitch"])
@@ -53,11 +54,14 @@ class Dataset(torch.utils.data.Dataset):
                         onset_idx += 1
 
                     target = make_target_tensor(onsets, start_time, self.segment_length, self.target_length)
-                    self.data.append([audio[frame:frame + self.segment_frame], feature[frame:frame + self.segment_frame], target])
+                    segment = audio[frame:frame + self.segment_frame]
+                    f = feature[i * target.shape[0]:(i + 1) * target.shape[0]]
+                    if f.shape[0] == target.shape[0]:
+                        self.data.append([segment, f, target])
+                j += 1
 
     def __getitem__(self, index):
         audio, feature, target = self.data[index]
-
         return torch.tensor(audio).float(), torch.tensor(feature).float(), target.float()
 
     def __len__(self):

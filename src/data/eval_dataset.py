@@ -27,10 +27,10 @@ class EvalDataset(torch.utils.data.Dataset):
         else:
             audio_path = self.audio_dir / f"vocals.wav"
 
-        feature_path = self.audio_dir / f"{audio_dir.name}_feature.json"
+        feature_path = self.audio_dir / f"{self.audio_dir.name}_feature.json"
         feature = json.load(open(feature_path))
         del feature['time']
-        feature = zip(*list(feature.items()))
+        feature = pd.DataFrame(feature).values
 
         audio, _ = librosa.load(audio_path, sr=self.sr)
 
@@ -44,9 +44,9 @@ class EvalDataset(torch.utils.data.Dataset):
                 self.data.append([segment, f, start_time])
 
     def __getitem__(self, index):
-        segment, start_time = self.data[index]
+        segment, feature, start_time = self.data[index]
 
-        return segment, start_time
+        return segment, feature, start_time
 
     def __len__(self):
         return len(self.data)
