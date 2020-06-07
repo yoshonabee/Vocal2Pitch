@@ -6,26 +6,30 @@ class CNN_RNN(nn.Module):
     def __init__(self, layers_config=None):
         super(CNN_RNN, self).__init__()
 
-        layers = [
-            getattr(nn, layer.pop('name'))(**layer)
-            for layer in layers_config
-        ]
+        layers = []
+        cnn_output_dim = 1
+
+        self._down_sampling_factor = 1
+        for layer in layers:
+            if "stride" in layer:
+                self._down_sampling_factor *= layer['stride']
+
+            name = layer.pop("name")
+            if "conv" in name.lower():
+                cnn_output_dim = layer['out_channels']
+            layers.append(getattr(nn, name)(**layer))
 
         #layers.append(nn.Dropout(0.5))
 
         self.cnn = nn.Sequential(*layers)
-        self.lstm = nn.LSTM(self.channels[-1], 256, batch_first=True, bidirectional=True, num_layers=3)
+
+        self.lstm = nn.LSTM(cnn_output_dim, 256, batch_first=True, bidirectional=True, num_layers=3)
 
         self.classifier = nn.Sequential(
             nn.ReLU(),
             nn.Linear(512, 1),
             nn.Sigmoid()
         )
-
-        self._down_sampling_factor = 1
-        for layer in layers:
-            if "stride" in layer:
-                self._down_sampling_factor *= layer['stride']
 
     @property
     def down_sampling_factor(self):
