@@ -45,15 +45,16 @@ def main(args):
             dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
             with torch.no_grad():
-                for x, idx in dataloader:
+                for x, feature, idx in dataloader:
                     x = x.to(args.device)
+                    feature = feature.to(args.device)
 
                     # pred = model(x).view(-1).tolist()
                     # idx = idx.view(-1).tolist()
 
                     # pred_onset_list[audio_dir.name].extend(list(zip(idx, pred)))
 
-                    pred = model(x).view(x.size(0), -1).cpu().numpy()
+                    pred = model(x, feature).view(x.size(0), -1).cpu().numpy()
                     
                     time_frames = np.array([i for i in range(0, int(pred.shape[1] * args.segment_length), args.segment_length)])
                     time_frames = time_frames / pred.shape[1]

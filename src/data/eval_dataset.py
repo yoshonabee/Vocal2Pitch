@@ -27,13 +27,21 @@ class EvalDataset(torch.utils.data.Dataset):
         else:
             audio_path = self.audio_dir / f"vocals.wav"
 
+        feature_path = self.audio_dir / f"{audio_dir.name}_feature.json"
+        feature = json.load(open(feature_path))
+        del feature['time']
+        feature = zip(*list(feature.items()))
+
         audio, _ = librosa.load(audio_path, sr=self.sr)
 
         for i, frame in enumerate(range(0, audio.shape[0] - self.segment_frame + 1, self.segment_frame)):
             start_time = i * self.segment_length
             end_time = (i + 1) * self.segment_length
 
-            self.data.append([torch.tensor(audio[frame:frame + self.segment_frame]).float(), start_time])
+            segment = torch.tensor(audio[frame:frame + self.segment_frame]).float()
+            f = torch.tensor(feature[i * 125:(i + 1) * 125]).float()
+            if f.shape[0] == 125:
+                self.data.append([segment, f, start_time])
 
     def __getitem__(self, index):
         segment, start_time = self.data[index]
