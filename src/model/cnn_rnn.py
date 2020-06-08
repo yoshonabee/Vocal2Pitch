@@ -10,7 +10,7 @@ class CNN_RNN(nn.Module):
         cnn_output_dim = 1
 
         self._down_sampling_factor = 1
-        for layer in layers:
+        for layer in layers_config:
             if "stride" in layer:
                 self._down_sampling_factor *= layer['stride']
 
@@ -23,11 +23,11 @@ class CNN_RNN(nn.Module):
 
         self.cnn = nn.Sequential(*layers)
 
-        self.lstm = nn.LSTM(cnn_output_dim, 256, batch_first=True, bidirectional=True, num_layers=3)
+        self.lstm = nn.LSTM(cnn_output_dim, 128, batch_first=True, bidirectional=True, num_layers=3)
 
         self.classifier = nn.Sequential(
             nn.ReLU(),
-            nn.Linear(512, 1),
+            nn.Linear(256, 1),
             nn.Sigmoid()
         )
 
