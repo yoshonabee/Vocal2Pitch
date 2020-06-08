@@ -2,7 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class CNN_RNN(nn.Module):
+from .transformer import TransformerEncoder
+
+class CNN_Transformer(nn.Module):
     def __init__(self, layers_config=None):
         super(CNN_RNN, self).__init__()
 
@@ -23,11 +25,11 @@ class CNN_RNN(nn.Module):
 
         self.cnn = nn.Sequential(*layers)
 
-        self.lstm = nn.LSTM(cnn_output_dim, 128, batch_first=True, bidirectional=True, num_layers=3)
+        self.transformer = TransformerEncoder(blocks=1, model_dim=128, q_dim=16, h=8, dff=512)
 
         self.classifier = nn.Sequential(
             nn.ReLU(),
-            nn.Linear(256, 1),
+            nn.Linear(128, 1),
             nn.Sigmoid()
         )
 
@@ -40,7 +42,7 @@ class CNN_RNN(nn.Module):
         x = self.cnn(x) # (B, 1, L) -> (B, C, L // down_sampling_factor (L'))
         x = x.transpose(1, 2) # (B, C, L') -> (B, L', C)
 
-        x, _ = self.lstm(x) # (B, L', C) -> (B, L', 2, 128)
+        x, _ = self.transformer(x) # (B, L', C) -> (B, L', 128)
         x = x.view(x.size(0), x.size(1), -1)
         out = self.classifier(x) # (B, L', 128) -> (B, L', 1)
 

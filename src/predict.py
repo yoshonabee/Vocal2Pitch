@@ -14,6 +14,8 @@ from utils import get_predicting_args, get_model_args, get_data_args, set_seed
 from tqdm import tqdm
 from data import EvalDataset
 
+torch.set_num_threads(4)
+
 def main(args):
     model_config = json.load(open(args.model_config, 'r'))
     model = CNN_RNN(
