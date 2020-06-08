@@ -28,11 +28,13 @@ class MultiHeadAttn(nn.Module):
         self.q_dim = q_dim
         self.h = h
         
-        self.wq = nn.Linear(model_dim, q_dim * h)
-        self.wk = nn.Linear(model_dim, q_dim * h)
-        self.wv = nn.Linear(model_dim, q_dim * h)
+        self.wq = nn.Linear(model_dim, q_dim * h, bias=False)
+        self.wk = nn.Linear(model_dim, q_dim * h, bias=False)
+        self.wv = nn.Linear(model_dim, q_dim * h, bias=False)
         
-        self.out = nn.Linear(q_dim * h, model_dim)
+        self.out = nn.Linear(q_dim * h, model_dim, bias=False)
+        self.dropout1 = nn.Dropout(0.1)
+        self.dropout2 = nn.Dropout(0.1)
         
     def forward(self, q, k, v, mask=None):
         q = self.wq(q).view(q.size(0), -1, self.h, self.q_dim) #(B, T, h, dq)
@@ -48,11 +50,11 @@ class MultiHeadAttn(nn.Module):
         if mask is not None:
             w = w.masked_fill(mask, float("-inf"))
 
-        w = F.softmax(w, -1)
+        w = self.dropout1(F.softmax(w, -1))
         z = torch.matmul(w, v) #bhtt, bhtq -> bhtq
         output = z.transpose(1, 2) #bhtp -> bthq
         output = output.contiguous().view(q.size(0), -1, self.h * self.q_dim)
-        output = self.out(output)
+        output = self.dropout2(self.out(output))
 
         return output
         
@@ -64,10 +66,11 @@ class EncoderModule(nn.Module):
         self.layernorm1 = nn.LayerNorm(model_dim)
         self.ffn = FFN(model_dim, dff)
         self.layernorm2 = nn.LayerNorm(model_dim)
+        self.dropout = nn.Dropout(0.1)
 
     def forward(self, x):
         z = self.layernorm1(self.multihead(x, x, x) + x)
-        z = self.layernorm2(self.ffn(z) + z)
+        z = self.layernorm2(self.dropout(self.ffn(z)) + z)
         return z
 
 class Encoder(nn.Module):
@@ -161,9 +164,10 @@ class TransformerEncoder(nn.Module):
             
         self.positional_encoder = PositionalEncoder(model_dim, max_seq_len)
         self.encoder = Encoder(blocks, model_dim, q_dim, h, dff)
+        self.dropout = nn.Dropout(0.1)
         
     def forward(self, x):
-        x = self.positional_encoder(x)
+        x = self.dropout(self.positional_encoder(x))
         enc_out = self.encoder(x)
         
         return enc_out
