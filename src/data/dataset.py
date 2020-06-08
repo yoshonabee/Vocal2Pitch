@@ -27,6 +27,7 @@ class Dataset(torch.utils.data.Dataset):
 
         with tqdm(json.load(open(self.data_json)), unit="audio") as t:
             t.set_description("Loading audios")
+
             for audio_dir in t:
                 audio_dir = Path(audio_dir)
                 audio_path = audio_dir / f"vocals-16k.wav"

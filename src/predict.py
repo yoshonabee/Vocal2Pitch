@@ -17,8 +17,7 @@ from data import EvalDataset
 def main(args):
     model_config = json.load(open(args.model_config, 'r'))
     model = CNN_RNN(
-        layers_config=model_config,
-        dropout=args.dropout
+        layers_config=model_config
     )
 
     model.load_state_dict(torch.load(args.model_path, map_location="cpu"))
