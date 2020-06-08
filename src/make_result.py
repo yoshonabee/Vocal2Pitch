@@ -14,6 +14,8 @@ from utils import get_make_result_args
 
 from tqdm import tqdm
 
+from multiprocessing import Pool
+
 def find_max_c(ts):
     max_c = 0
     max_t = 0
@@ -24,6 +26,49 @@ def find_max_c(ts):
             max_t = t
 
     return max_t
+
+def process_audio(inputs):
+    name, pred, audio_dir, alpha, crepe_confidence_thres, min_pitch, max_pitch = inputs
+
+    if len(pred) == 0:
+        return []
+
+    if crepe_confidence_thres < 0:
+        pitch_list = np.array(json.load(open(audio_dir / f"{name}_vocal.json")))
+    else:
+        raw_pitch_list = pd.read_csv(audio_dir / f"{name}_crepe.csv")
+        pitch_list = raw_pitch_list.values[:,:2]
+
+        for i in range(pitch_list.shape[0]):
+            if raw_pitch_list['confidence'][i] < crepe_confidence_thres:
+                pitch_list[i][1] = 0
+
+    result = []
+
+    pitch_list_idx = 0
+    for onset, offset in pred:
+        try:
+            while pitch_list[pitch_list_idx][0] < onset * (1 - alpha) + offset * alpha:
+                pitch_list_idx += 1
+
+            start_idx = pitch_list_idx
+
+            while pitch_list[pitch_list_idx][0] < offset:
+                pitch_list_idx += 1
+
+            end_idx = pitch_list_idx
+        except:
+            if pitch_list_idx >= len(pitch_list):
+                break
+        
+        # try:
+        final_pitch = process_pitch_outlier(pitch_list, start_idx, end_idx, freq2midi=crepe_confidence_thres > 0)          
+
+        if final_pitch >= min_pitch and final_pitch <= max_pitch:
+            result.append([onset, offset, final_pitch])
+
+    return result
+
 
 def main(args):
 
@@ -69,65 +114,34 @@ def main(args):
 
                         ts = []
 
-
             pred_onset_list[name] = segments
-            # from IPython import embed
-            # embed()
-
-
 
     pred_onset_list = dict(sorted(list(pred_onset_list.items()), key=lambda x: int(x[0])))
 
-    print(len(pred_onset_list))
-
     data_dir = Path(args.data_dir)
+
+    inputs = [
+        (
+            name,
+            pred_onset_list[name],
+            data_dir / name,
+            args.alpha
+            args.crepe_confidence_thres,
+            args.min_pitch,
+            args.max_pitch
+        ) for name in pred_onset_list
+
+    ]
+
+    print(len(inputs))
 
     results = {}
 
-    with tqdm(pred_onset_list, unit="audio") as t:
-        for name in t:
-            if len(pred_onset_list[name]) == 0:
-                results[name] = []
-                continue
-
-            audio_dir = data_dir / name
-
-            if not args.crepe:
-                pitch_list = np.array(json.load(open(audio_dir / f"{name}_vocal.json")))
-            else:
-                raw_pitch_list = pd.read_csv(audio_dir / f"{name}_crepe.csv")
-                pitch_list = raw_pitch_list.values[:,:2]
-
-                for i in range(pitch_list.shape[0]):
-                    if raw_pitch_list['confidence'][i] < args.crepe_confidence_thres:
-                        pitch_list[i][1] = 0
-
-            result = []
-
-            pitch_list_idx = 0
-            for onset, offset in pred_onset_list[name]:
-                try:
-                    while pitch_list[pitch_list_idx][0] < onset * (1 - args.alpha) + offset * args.alpha:
-                        pitch_list_idx += 1
-
-                    start_idx = pitch_list_idx
-
-                    while pitch_list[pitch_list_idx][0] < offset:
-                        pitch_list_idx += 1
-
-                    end_idx = pitch_list_idx
-                except:
-                    if pitch_list_idx >= len(pitch_list):
-                        break
-                
-                # try:
-                final_pitch = process_pitch_outlier(pitch_list, start_idx, end_idx, freq2midi=args.crepe)          
-
-                if final_pitch >= args.min_pitch and final_pitch <= args.max_pitch:
-                    result.append([onset, offset, final_pitch])
-
-
-            results[name] = result
+    with tqdm(total=len(inputs), unit="audio") as t:
+        with Pool(args.num_workers) as p:
+            for result in p.imap(process_audio, inputs)
+                results[name] = result
+                t.update(1)
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
