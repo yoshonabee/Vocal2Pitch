@@ -36,7 +36,14 @@ class Dataset(torch.utils.data.Dataset):
 
                 feature = json.load(open(feature_path))
                 del feature['time']
-                feature = pd.DataFrame(feature).values
+                feature = pd.DataFrame(feature)
+
+                for name in feature:
+                    mean = feature[name].mean()
+                    std = feature[name].std()
+                    feature[name] = (feature[name] - mean) / std
+
+                feature = feature.values
                 
                 audio, _ = librosa.load(audio_path, sr=self.sr)
                 

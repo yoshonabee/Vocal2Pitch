@@ -69,7 +69,6 @@ def main(args):
 
                         ts = []
 
-
             pred_onset_list[name] = segments
             # from IPython import embed
             # embed()
@@ -122,7 +121,6 @@ def main(args):
                 
                 # try:
                 final_pitch = process_pitch_outlier(pitch_list, start_idx, end_idx, freq2midi=args.crepe)          
-
                 if final_pitch >= args.min_pitch and final_pitch <= args.max_pitch:
                     result.append([onset, offset, final_pitch])
 
@@ -159,9 +157,7 @@ def process_pitch_mean(pitch_list, start_idx, end_idx, freq2midi=False):
 def process_pitch_outlier(pitch_list, start_idx, end_idx, freq2midi=False):
     pitch = np.array([p for p in pitch_list[start_idx:end_idx, 1] if p > 0])
     
-
     final_pitch = pitch.mean()
-
     try:
         if freq2midi:
             from audiolazy.lazy_midi import freq2midi
