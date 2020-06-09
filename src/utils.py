@@ -54,8 +54,7 @@ def get_predicting_args(parser):
     return parser
 
 def get_make_result_args(parser):
-    parser.add_argument("pred_onset_list")
-    parser.add_argument("data_dir")
+    parser.add_argument("pred_onset_list", nargs="+")
     parser.add_argument("--output_dir", type=str, default=".")
     parser.add_argument("--alpha", type=float, default=0.25)
     parser.add_argument("--min_pitch", type=int, default=40)
@@ -63,11 +62,11 @@ def get_make_result_args(parser):
     parser.add_argument("--onset_thres", type=float, default=0.35)
     parser.add_argument("--crepe", action="store_true", help="use crepe's pitch tracking estimation")
     parser.add_argument("--crepe_confidence_thres", type=float, default=0.4)
+    parser.add_argument("--name", type=str)
     return parser
 
 def get_evaluating_args(parser):
     parser.add_argument("predict_json")
-    parser.add_argument("data_dir")
 
     return parser
 
