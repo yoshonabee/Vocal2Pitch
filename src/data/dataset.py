@@ -3,6 +3,7 @@ import librosa
 from pathlib import Path
 import pandas as pd
 
+import random
 from .utils import get_onset_list, make_target_tensor
 
 import torch
@@ -53,8 +54,22 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         audio, target = self.data[index]
+        audio = self.augmentation(audio, self.sr)
 
         return torch.tensor(audio).float(), target.float()
+
+    @staticmethod
+    def augmentation(audio, sr):
+        pitch_factor = random.randint(-12, 12)
+        noise_factor = 0.01
+        # noise
+        audio = librosa.effects.pitch_shift(audio, sr, pitch_factor)
+        
+        noise = np.random.randn(audio.shape[0]) * noise_factor
+        audio = audio + noise
+
+        return audio
+
 
     def __len__(self):
         return len(self.data)
