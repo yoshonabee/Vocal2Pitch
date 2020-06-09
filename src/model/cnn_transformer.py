@@ -6,7 +6,7 @@ from .transformer import TransformerEncoder
 
 class CNN_Transformer(nn.Module):
     def __init__(self, layers_config=None):
-        super(CNN_RNN, self).__init__()
+        super(CNN_Transformer, self).__init__()
 
         layers = []
         cnn_output_dim = 1
@@ -25,11 +25,10 @@ class CNN_Transformer(nn.Module):
 
         self.cnn = nn.Sequential(*layers)
 
-        self.transformer = TransformerEncoder(blocks=1, model_dim=128, q_dim=16, h=8, dff=512)
+        self.transformer = TransformerEncoder(blocks=3, model_dim=64, q_dim=8, h=8, dff=256)
 
         self.classifier = nn.Sequential(
-            nn.ReLU(),
-            nn.Linear(128, 1),
+            nn.Linear(64, 1),
             nn.Sigmoid()
         )
 
@@ -42,7 +41,7 @@ class CNN_Transformer(nn.Module):
         x = self.cnn(x) # (B, 1, L) -> (B, C, L // down_sampling_factor (L'))
         x = x.transpose(1, 2) # (B, C, L') -> (B, L', C)
 
-        x, _ = self.transformer(x) # (B, L', C) -> (B, L', 128)
+        x = self.transformer(x) # (B, L', C) -> (B, L', 128)
         x = x.view(x.size(0), x.size(1), -1)
         out = self.classifier(x) # (B, L', 128) -> (B, L', 1)
 

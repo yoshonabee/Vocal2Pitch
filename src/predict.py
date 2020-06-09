@@ -8,7 +8,7 @@ import math
 import torch
 
 import numpy as np
-from model import CNN_RNN
+from model import CNN_Transformer
 from utils import get_predicting_args, get_model_args, get_data_args, set_seed
 
 from tqdm import tqdm
@@ -18,7 +18,7 @@ torch.set_num_threads(4)
 
 def main(args):
     model_config = json.load(open(args.model_config, 'r'))
-    model = CNN_RNN(
+    model = CNN_Transformer(
         layers_config=model_config
     )
 

@@ -18,7 +18,7 @@ torch.set_num_threads(4)
 def main(args):
     if args.task == "onset_offset_detection":
         model_config = json.load(open(args.model_config, 'r'))
-        model = CNN_RNN(
+        model = CNN_Transformer(
             layers_config=model_config
         )
 

@@ -91,7 +91,7 @@ def main(args):
             name,
             pred_onset_list[name],
             data_dir / name,
-            args.alpha
+            args.alpha,
             args.crepe_confidence_thres,
             args.min_pitch,
             args.max_pitch
@@ -105,7 +105,7 @@ def main(args):
 
     with tqdm(total=len(inputs), unit="audio") as t:
         with Pool(args.num_workers) as p:
-            for result in p.imap(process_audio, inputs)
+            for name, result in p.imap(process_audio, inputs):
                 results[name] = result
                 t.update(1)
 
@@ -166,7 +166,7 @@ def process_audio(inputs):
     name, pred, audio_dir, alpha, crepe_confidence_thres, min_pitch, max_pitch = inputs
 
     if len(pred) == 0:
-        return []
+        return name, []
 
     if crepe_confidence_thres < 0:
         pitch_list = np.array(json.load(open(audio_dir / f"{name}_vocal.json")))
@@ -202,7 +202,7 @@ def process_audio(inputs):
         if final_pitch >= min_pitch and final_pitch <= max_pitch:
             result.append([onset, offset, final_pitch])
 
-    return result
+    return name, result
 
 
 if __name__ == "__main__":

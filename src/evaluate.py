@@ -14,7 +14,7 @@ from utils import get_evaluating_args
 from tqdm import tqdm
 
 def main(args):
-    setattr(args, data_dir, "../data/MIR-ST500/" if "val" in args.pred_onset_list else "../data/AIcup_testset_ok/")
+    setattr(args, 'data_dir', "../data/MIR-ST500/" if "val" in args.predict_json else "../data/AIcup_testset_ok/")
 
     predict_json = json.load(open(args.predict_json))
 
