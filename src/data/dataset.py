@@ -2,7 +2,7 @@ import json
 import librosa
 from pathlib import Path
 import pandas as pd
-
+import numpy as np
 import random
 from .utils import get_onset_list, make_target_tensor
 
