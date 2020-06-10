@@ -5,4 +5,4 @@ python3 train.py \
     --weight_decay 0 \
     --dropout 0 \
     --criterion bceloss \
-    --name dropout0.5_feature_cnn_rnn3_model5_bidirectional_no_weight_decay
+    --name official_feature_only_model5

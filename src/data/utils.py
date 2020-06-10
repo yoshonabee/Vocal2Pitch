@@ -14,19 +14,13 @@ def get_onset_list(df, thres):
 
     return result
 
-def make_target_tensor(onset_list, start_time, time_length, length):
-    time_per_frame = time_length / length
+def make_target_tensor(onset_list, length):
+    time_per_frame = 0.032
 
-    tensor = torch.zeros(length)
+    target = torch.zeros(length)
 
     for onset in onset_list:
-        frame = int((onset - start_time) // time_per_frame)
+        frame = int(onset // time_per_frame)
         tensor[frame] = 1
-        
-        if frame > 0:
-            tensor[frame - 1] = 0
 
-        if frame < length - 1:
-            tensor[frame + 1] = 0
-
-    return tensor
+    return target

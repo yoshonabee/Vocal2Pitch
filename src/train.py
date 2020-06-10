@@ -13,35 +13,30 @@ from criterion import ResampleCriterion
 from pytorch_trainer import Trainer
 from pytorch_trainer.metrics import Accuracy, Precision, Recall, F1
 
+torch.set_num_threads(4)
+
 def main(args):
     if args.task == "onset_offset_detection":
         model_config = json.load(open(args.model_config, 'r'))
         model = CNN_RNN(
-            layers_config=model_config,
-            dropout=args.dropout
+            layers_config=model_config
         )
 
         optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
-        target_length = int(args.sr * args.segment_length / model.down_sampling_factor)
-
         train_dataset = Dataset(
             args.train_json,
             thres=args.thres,
-            target_length=target_length,
             segment_length=args.segment_length,
-            sr=args.sr
         )
 
         val_dataset = Dataset(
             args.val_json,
             thres=args.thres,
-            target_length=target_length,
             segment_length=args.segment_length,
-            sr=args.sr
         )
 
-        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
+        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True)
         val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
 
         trainer = Trainer(
