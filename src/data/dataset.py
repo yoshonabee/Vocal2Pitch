@@ -1,5 +1,6 @@
 import json
 import librosa
+from multiprocessing import Pool
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -60,24 +61,36 @@ class Dataset(torch.utils.data.Dataset):
 
         return torch.tensor(audio).float(), target.float()
 
-    @staticmethod
     def augmentation(self, audio, sr):
         if self.augment == False:
             return
 
-        for audio, _ in self.data:
-            for i in range(self.data_amount - 1):
-                pitch_factor = random.randint(-12, 12)
-                noise_factor = 9 * random.random() / 100 + 1e-3 # [1e-3, 1e-2]
-                # noise
-                noise = np.random.randn(audio.shape[0]) * noise_factor
-                augmented = librosa.effects.pitch_shift(audio, self.sr, pitch_factor) + noise
-                
-                self.data.append(augmented)
+        data = list(zip(self.data, [self.data_amount for _ in range(len(self.data))], [self.sr for _ in range(len(self.data))]))
 
-        return audio
+        with tqdm(total=len(data), unit="audios") as t:
+            t.set_description("Augmentating audios")
 
+            with Pool(4) as p:
+                for results, targets in p.imap(_augmentation, data):
+                    self.data.extend(list(zip(results, targets)))
+                    t.update(1)
 
     def __len__(self):
         return len(self.data)
+
+def _augmentation(inputs):
+    (audio, target), data_amount, sr = inputs
+
+    results = []
+    for i in range(data_amount - 1):
+        pitch_factor = random.randint(-12, 12)
+        noise_factor = 9 * random.random() / 100 + 1e-3 # [1e-3, 1e-2]
+        # noise
+        noise = np.random.randn(audio.shape[0]) * noise_factor
+        augmented = librosa.effects.pitch_shift(audio, sr, pitch_factor) + noise
+        results.append(augmented)
+
+    return results, [target for _ in range(len(results))]
+
+
 
