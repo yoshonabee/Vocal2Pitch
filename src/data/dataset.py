@@ -12,7 +12,7 @@ import torch
 from tqdm import tqdm
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, data_json, thres, target_length, segment_length=4, sr=16000, data_amount=2, augment=True):
+    def __init__(self, data_json, thres, target_length, segment_length=4, sr=16000, data_amount=5, augment=True):
         self.data_json = Path(data_json)
         self.thres = thres
         self.target_length = target_length
@@ -29,7 +29,7 @@ class Dataset(torch.utils.data.Dataset):
 
     def load_data(self):
         self.data = []
-        self.target = 0
+        self.target = []
 
         with tqdm(json.load(open(self.data_json)), unit="audio") as t:
             t.set_description("Loading audios")
@@ -65,7 +65,7 @@ class Dataset(torch.utils.data.Dataset):
 
         return torch.tensor(audio).float(), target.float()
 
-    def augmentation(self, audio, sr):
+    def augmentation(self):
         if self.augment == False:
             return
 

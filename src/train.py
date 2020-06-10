@@ -45,8 +45,8 @@ def main(args):
             augment=False
         )
 
-        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
-        val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
+        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True)
+        val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False)
 
         trainer = Trainer(
             model,

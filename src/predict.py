@@ -40,7 +40,7 @@ def main(args):
                 audio_dir,
                 thres=args.thres,
                 segment_length=args.segment_length,
-                sr=args.sr
+                sr=args.sr,
             )
 
             dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
