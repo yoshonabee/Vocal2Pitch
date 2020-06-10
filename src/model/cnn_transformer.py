@@ -25,10 +25,10 @@ class CNN_Transformer(nn.Module):
 
         self.cnn = nn.Sequential(*layers)
 
-        self.transformer = TransformerEncoder(blocks=3, model_dim=64, q_dim=8, h=8, dff=256)
+        self.transformer = TransformerEncoder(blocks=3, model_dim=128, q_dim=16, h=8, dff=512)
 
         self.classifier = nn.Sequential(
-            nn.Linear(64, 1),
+            nn.Linear(128, 1),
             nn.Sigmoid()
         )
 
