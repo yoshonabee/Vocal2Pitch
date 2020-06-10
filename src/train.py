@@ -41,7 +41,8 @@ def main(args):
             thres=args.thres,
             target_length=target_length,
             segment_length=args.segment_length,
-            sr=args.sr
+            sr=args.sr,
+            augment=False
         )
 
         train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
