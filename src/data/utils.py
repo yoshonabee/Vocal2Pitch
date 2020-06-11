@@ -21,6 +21,6 @@ def make_target_tensor(onset_list, length):
 
     for onset in onset_list:
         frame = int(onset // time_per_frame)
-        tensor[frame] = 1
+        target[frame] = 1
 
     return target

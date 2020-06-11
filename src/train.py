@@ -19,7 +19,8 @@ def main(args):
     if args.task == "onset_offset_detection":
         model_config = json.load(open(args.model_config, 'r'))
         model = CNN_RNN(
-            layers_config=model_config
+            layers_config=model_config,
+            segment_length=4
         )
 
         optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)

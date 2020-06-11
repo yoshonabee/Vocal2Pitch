@@ -16,12 +16,11 @@ class ResampleCriterion(DefaultCriterion):
         self.inbalance_ratio = inbalance_ratio
 
     def forward(self, model, data):
-        x, feature, y = data
+        x, y = data
         x = x.to(self.device)
-        feature = feature.to(self.device)
         y = y.to(self.device)
 
-        pred = model(x, feature)
+        pred = model(x)
 
         resampled_pred, resampled_y = self.resample(pred, y)
 

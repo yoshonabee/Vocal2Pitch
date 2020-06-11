@@ -14,7 +14,7 @@ class Dataset(torch.utils.data.Dataset):
         self.data_json = Path(data_json)
         self.thres = thres
         self.segment_length = segment_length
-        self.segment_frame = int(segment_length // 0.032)
+        self.segment_frame = int(segment_length / 0.032)
 
         self.data = []
         self.index = []
@@ -35,7 +35,7 @@ class Dataset(torch.utils.data.Dataset):
 
                 feature = json.load(open(feature_path))
                 del feature['time']
-                del feature['pitch']
+                del feature['vocal_pitch']
                 feature = pd.DataFrame(feature).values
                 
                 label = pd.read_csv(label_path, sep=" ", header=None, names=["start", "end", "pitch"])
@@ -43,8 +43,8 @@ class Dataset(torch.utils.data.Dataset):
 
                 target = make_target_tensor(onset_list, feature.shape[0])
                 
-                self.index.extend([[i, j, j + self.segment_frame] for j in range(0, feature.shape[0] - self.segment_frame + 1)])
-                self.data.append(torch.tensor(feature).float(), torch.tensor(target).float())
+                self.index.extend([[i, j, j + self.segment_frame] for j in range(0, feature.shape[0] - self.segment_frame + 1, int(self.segment_frame / 5))])
+                self.data.append([torch.tensor(feature).float(), torch.tensor(target).float()])
 
 
     def __getitem__(self, index):
