@@ -11,3 +11,4 @@ runs/
 *ipython_checkpoints
 
 data/
+test.py
