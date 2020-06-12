@@ -1,39 +1,39 @@
 [
 	{
-		"name": "Conv2d",
-		"in_channels": 1,
-		"out_channels": 32,
-		"kernel_size": [5, 5],
-		"padding": [2, 2],
+		"name": "Conv1d",
+		"in_channels": 2,
+		"out_channels": 16,
+		"kernel_size": 101,
+		"padding": 50
 	},
-
 	{"name": "ReLU"},
 	{
-		"name": "BatchNorm2d",
+		"name": "BatchNorm1d",
+		"num_features": 16
+	},
+	{
+		"name": "Conv1d",
+		"in_channels": 16,
+		"out_channels": 32,
+		"kernel_size": 101,
+		"padding": 50,
+		"stride": 2
+	},
+	{"name": "ReLU"},
+	{
+		"name": "BatchNorm1d",
 		"num_features": 32
 	},
-	{
-		"name": "Conv2d",
+	{	
+		"name": "Conv1d",
 		"in_channels": 32,
 		"out_channels": 64,
-		"kernel_size": [3, 3],
-		"padding": [1, 1]
+		"kernel_size": 101,
+		"padding": 50
 	},
 	{"name": "ReLU"},
 	{
-		"name": "BatchNorm2d",
+		"name": "BatchNorm1d",
 		"num_features": 64
-	},
-	{	
-		"name": "Conv2d",
-		"in_channels": 64,
-		"out_channels": 128,
-		"kernel_size": [3, 3],
-		"padding": [1, 1]
-	},
-	{"name": "ReLU"},
-	{
-		"name": "BatchNorm2d",
-		"num_features": 128
 	}
 ]

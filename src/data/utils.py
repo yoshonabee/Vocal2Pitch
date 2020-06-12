@@ -15,12 +15,12 @@ def get_onset_list(df, thres):
     return result
 
 def make_target_tensor(onset_list, length):
-    time_per_frame = 0.032
+    time_per_frame = 0.02
 
-    target = torch.zeros(length)
+    target = torch.zeros(length).float()
 
     for onset in onset_list:
         frame = int(onset // time_per_frame)
-        tensor[frame] = 1
+        target[frame] = 1
 
     return target

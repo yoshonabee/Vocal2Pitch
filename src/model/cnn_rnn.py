@@ -10,8 +10,6 @@ class CNN_RNN(nn.Module):
         cnn_output_dim = 1
 
         for layer in layers_config:
-            if "stride" in layer:
-
             name = layer.pop("name")
             if "conv" in name.lower():
                 cnn_output_dim = layer['out_channels']
