@@ -47,7 +47,7 @@ class Dataset(torch.utils.data.Dataset):
 
                 target = make_target_tensor(onset_list, pitch.shape[0] // 2)
                 
-                self.index.extend([[i, (j, j + self.segment_frame), (k, k + self.segment_frame // 2)] for j, k in zip(range(0, pitch.shape[0] - self.segment_frame + 1), range(0, target.shape[0] - self.segment_frame // 2 + 1))])
+                self.index.extend([[i, (j, j + self.segment_frame), (k, k + self.segment_frame // 2)] for j, k in zip(range(0, pitch.shape[0] - self.segment_frame + 1, 100), range(0, target.shape[0] - self.segment_frame // 2 + 1, 50))])
                 self.data.append([torch.tensor(pitch).float(), target])
 
 
