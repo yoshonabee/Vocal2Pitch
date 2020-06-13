@@ -95,10 +95,11 @@ def main(args):
                 
                 # try:
                 final_pitch = process_pitch_outlier_most(pitch_list, start_idx, end_idx, freq2midi=args.crepe)       
+                #final_pitch = process_pitch_outlier_mid(pitch_list, start_idx, end_idx, freq2midi=args.crepe)
 
                 if final_pitch >= args.min_pitch and final_pitch <= args.max_pitch:
-                    if offset - onset < 8:
-                        result.append([onset, offset, final_pitch])
+                    #if offset - onset < 8:
+                    result.append([onset, offset, final_pitch])
 
 
             results[name] = result
@@ -161,6 +162,21 @@ def process_pitch_outlier_most(pitch_list, start_idx, end_idx, freq2midi=False):
 
     return final_pitch
 
+def process_pitch_outlier_mid(pitch_list, start_idx, end_idx, freq2midi=False):
+    pitch = np.array([p for p in pitch_list[start_idx:end_idx, 1] if p > 0])
+
+    try:
+        if freq2midi:
+            from audiolazy.lazy_midi import freq2midi
+            pitch = np.array(list(map(freq2midi, pitch)))
+            
+        final_pitch = int(np.median(pitch).round())
+            
+    except:
+        final_pitch = 0
+    
+    return final_pitch
+
 def get_segments(times, preds, onset_thres=None, normalize=False):
     if normalize:
         mean = preds.mean()
@@ -189,7 +205,7 @@ def get_segments(times, preds, onset_thres=None, normalize=False):
     # onset_thres /= 1000
 
     if onset_thres is None:
-        onset_thres = 0.1
+        onset_thres = 0.08
 
     segments = []
     segment = []
