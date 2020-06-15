@@ -15,6 +15,7 @@ from data import EvalDataset
 from utils import get_make_result_args
 
 from tqdm import tqdm
+from multiprocessing import Pool
 
 def find_max_c(ts):
     max_c = 0
@@ -207,7 +208,7 @@ def get_segments(times, preds, onset_thres=None, normalize=False):
                     onset = offset + 1e-6
 
                 if last_onset:
-                    if offset - last_onset >= 0.08:
+                    if offset - last_onset >= 0.1:
                         segments.append([last_onset, offset])
 
                 last_onset = onset
