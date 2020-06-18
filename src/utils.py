@@ -64,6 +64,7 @@ def get_make_result_args(parser):
     parser.add_argument("--normalize", action="store_true")
     parser.add_argument("--crepe", action="store_true", help="use crepe's pitch tracking estimation")
     parser.add_argument("--crepe_confidence_thres", type=float, default=0.4)
+    parser.add_argument("-j", "--num_workers", type=int, default=4)
     return parser
 
 def get_evaluating_args(parser):

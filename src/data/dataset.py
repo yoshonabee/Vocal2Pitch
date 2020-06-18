@@ -66,7 +66,7 @@ class Dataset(torch.utils.data.Dataset):
         return torch.tensor(audio).float(), target.float()
 
     def augmentation(self):
-        if self.augment == False:
+        if self.augment == False or self.data_amount == 1:
             return
 
         data = list(zip(self.data, [self.data_amount for _ in range(len(self.data))], [self.sr for _ in range(len(self.data))]))
