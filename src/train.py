@@ -10,17 +10,14 @@ from data import Dataset
 from model import CNN_Transformer
 from criterion import ResampleCriterion
 
-from pytorch_trainer import Trainer
+from trainer import Trainer
 from pytorch_trainer.metrics import Accuracy, Precision, Recall, F1
 
 torch.set_num_threads(4)
 
 def main(args):
     if args.task == "onset_offset_detection":
-        model_config = json.load(open(args.model_config, 'r'))
-        model = CNN_Transformer(
-            layers_config=model_config
-        )
+        model = CNN_Transformer()
 
         print(model)
 

@@ -102,6 +102,22 @@ class DecoderModule(nn.Module):
         z = self.layernorm3(self.ffn(z) + z)
         return z
 
+class InverseDecoderModule(nn.Module):
+    def __init__(self, model_dim, q_dim, h, dff):
+        super(DecoderModule, self).__init__()
+        self.multihead1 = MultiHeadAttn(model_dim, q_dim, h)
+        self.layernorm1 = nn.LayerNorm(model_dim)
+        self.multihead2 = MultiHeadAttn(model_dim, q_dim, h)
+        self.layernorm2 = nn.LayerNorm(model_dim)
+        self.ffn = FFN(model_dim, dff)
+        self.layernorm3 = nn.LayerNorm(model_dim)
+
+    def forward(self, q, k):
+        z = self.layernorm1(self.multihead1(k, k, k) + k)
+        z = self.layernorm2(self.multihead2(q, z, z) + z)
+        z = self.layernorm3(self.ffn(z) + z)
+        return z
+
 class Decoder(nn.Module):
     def __init__(self, blocks, model_dim, q_dim, h, dff):
         super(Decoder, self).__init__()
@@ -171,6 +187,24 @@ class TransformerEncoder(nn.Module):
         enc_out = self.encoder(x)
         
         return enc_out
+
+class TransformerDecoder(nn.Module):
+    def __init__(self, blocks, model_dim, q_dim, h, dff, max_seq_len=500):
+        super(Transformer, self).__init__()
+        self.last_out = last_out
+            
+        self.positional_encoder = PositionalEncoder(model_dim, max_seq_len)
+        self.blocks = nn.ModuleList([InverseDecoderModule(model_dim, q_dim, h, dff) for _ in range(blocks)])
+        self.dropout = nn.Dropout(0.1)
+
+    def forward(self, encoder_output, decoder_input):
+        decoder_input = self.dropout(self.positional_encoder(decoder_input))
+        
+        for block in self.blocks:
+            decoder_output = self.decoder(encoder_output, decoder_input)
+        
+        return decoder_output
+
     
 def count_params(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)

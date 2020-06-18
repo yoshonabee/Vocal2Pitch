@@ -15,23 +15,29 @@ class ResampleCriterion(DefaultCriterion):
         super(ResampleCriterion, self).__init__(*args, **kwargs)
         self.inbalance_ratio = inbalance_ratio
 
+        self.pitch_criterion = nn.L1Loss().to(self.device)
+
     def forward(self, model, data):
-        x, y = data
+        x, onset_y, pitch_y = data
         x = x.to(self.device)
-        y = y.to(self.device)
+        onset_y = onset_y.to(self.device)
+        pitch_y = pitch_y.to(self.device)
 
-        pred = model(x)
+        onset_out, pitch_out = model(x)
 
-        resampled_pred, resampled_y = self.resample(pred, y)
+        resampled_onset_out, resampled_onset_y = self.resample(onset_out, onset_y)
+        onset_out, onset_y = onset_out.view(-1), onset_y.view(-1)
+        pitch_out, pitch_y = pitch_out.view(-1), pitch_y.view(-1)
 
-        loss = self.criterion(resampled_pred, resampled_y)
+        onset_loss = self.criterion(resampled_onset_out, resampled_onset_y)
+        pitch_loss = self.pitch_criterion(pitch_out, pitch_y)
 
-        return loss, resampled_pred, resampled_y
+        loss = onset_loss + pitch_loss
+
+        return loss, onset_out, onset_y, onset_loss, pitch_loss
 
     def resample(self, pred, y):
         #r_pred = pred.view(-1, pred.size(-1))
-        r_pred = pred.view(-1)
-        r_y = y.view(-1)
 
         if self.inbalance_ratio <= 0:
             return r_pred, r_y

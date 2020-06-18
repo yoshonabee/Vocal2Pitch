@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import random
-from .utils import get_onset_list, make_target_tensor
+from .utils import get_onset_list, make_target_tensor, make_pitch_tensor
 
 import torch
 
@@ -50,20 +50,25 @@ class Dataset(torch.utils.data.Dataset):
                     end_time = (i + 1) * self.segment_length
 
                     onsets = []
+                    pitchs = [onset_list[onset_idx - 1]] if onset_idx > 0 else []
                     while onset_idx < len(onset_list) and onset_list[onset_idx] < end_time:
-                        onsets.append(onset_list[onset_idx])
+                        onsets.append(onset_list[onset_idx][0])
+                        pitchs.append(onset_list[onset_idx])
                         onset_idx += 1
 
                     target = make_target_tensor(onsets, start_time, self.segment_length, self.target_length)
+                    pitch = make_pitch_tensor(pitchs, start_time, self.segment_length, self.target_length)
                     
-                    self.data.append([audio[frame:frame + self.segment_frame], len(self.target)])
+                    self.data.append([audio[frame:frame + self.segment_frame], len(self.target), len(self.pitch)])
                     self.target.append(target)
+                    self.pitch.append(pitch)
 
     def __getitem__(self, index):
-        audio, target = self.data[index]
+        audio, target, pitch = self.data[index]
         target = self.target[target]
+        pitch = self.pitch[pitch]
 
-        return torch.tensor(audio).float(), target.float()
+        return torch.tensor(audio).float(), target.float(), pitch.float()
 
     def augmentation(self):
         if self.augment == False or self.data_amount == 1:
