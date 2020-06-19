@@ -29,6 +29,14 @@ class CNN_Transformer(nn.Module):
             nn.Linear(32, 1),
             nn.Sigmoid()
         )
+
+        self.pitch_predictor = nn.Sequential(
+            nn.ReLU(),
+            nn.Linear(256, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1),
+        )
+
         self._down_sampling_factor = 64 * 4 * 2
 
     @property
