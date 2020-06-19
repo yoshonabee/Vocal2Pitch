@@ -1,7 +1,3 @@
-"""
-NOT USED
-"""
-
 import math
 import numpy as np
 import torch
@@ -104,7 +100,7 @@ class DecoderModule(nn.Module):
 
 class InverseDecoderModule(nn.Module):
     def __init__(self, model_dim, q_dim, h, dff):
-        super(DecoderModule, self).__init__()
+        super(InverseDecoderModule, self).__init__()
         self.multihead1 = MultiHeadAttn(model_dim, q_dim, h)
         self.layernorm1 = nn.LayerNorm(model_dim)
         self.multihead2 = MultiHeadAttn(model_dim, q_dim, h)
@@ -190,18 +186,17 @@ class TransformerEncoder(nn.Module):
 
 class TransformerDecoder(nn.Module):
     def __init__(self, blocks, model_dim, q_dim, h, dff, max_seq_len=500):
-        super(Transformer, self).__init__()
-        self.last_out = last_out
+        super(TransformerDecoder, self).__init__()
             
         self.positional_encoder = PositionalEncoder(model_dim, max_seq_len)
         self.blocks = nn.ModuleList([InverseDecoderModule(model_dim, q_dim, h, dff) for _ in range(blocks)])
         self.dropout = nn.Dropout(0.1)
 
     def forward(self, encoder_output, decoder_input):
-        decoder_input = self.dropout(self.positional_encoder(decoder_input))
+        decoder_output = self.dropout(self.positional_encoder(decoder_input))
         
         for block in self.blocks:
-            decoder_output = self.decoder(encoder_output, decoder_input)
+            decoder_output = block(encoder_output, decoder_output)
         
         return decoder_output
 
