@@ -17,10 +17,7 @@ from data import EvalDataset
 torch.set_num_threads(4)
 
 def main(args):
-    model_config = json.load(open(args.model_config, 'r'))
-    model = CNN_Transformer(
-        layers_config=model_config
-    )
+    model = CNN_Transformer()
 
     model.load_state_dict(torch.load(args.model_path, map_location="cpu"))
     model_name = args.model_path.split("/")[-2]
@@ -54,7 +51,7 @@ def main(args):
 
                     # pred_onset_list[audio_dir.name].extend(list(zip(idx, pred)))
 
-                    pred = model(x).view(x.size(0), -1).cpu().numpy()
+                    pred = model(x)[0].view(x.size(0), -1).cpu().numpy()
                     
                     time_frames = np.array([i for i in range(0, int(pred.shape[1] * args.segment_length), args.segment_length)])
                     time_frames = time_frames / pred.shape[1]

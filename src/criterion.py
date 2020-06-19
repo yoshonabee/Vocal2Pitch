@@ -24,19 +24,19 @@ class ResampleCriterion(DefaultCriterion):
         pitch_y = pitch_y.to(self.device)
 
         onset_out, pitch_out = model(x)
-
-        resampled_onset_out, resampled_onset_y = self.resample(onset_out, onset_y)
+        
         onset_out, onset_y = onset_out.view(-1), onset_y.view(-1)
+        resampled_onset_out, resampled_onset_y = self.resample(onset_out, onset_y)
         pitch_out, pitch_y = pitch_out.view(-1), pitch_y.view(-1)
 
         onset_loss = self.criterion(resampled_onset_out, resampled_onset_y)
         pitch_loss = self.pitch_criterion(pitch_out, pitch_y)
 
-        loss = onset_loss + pitch_loss
+        loss = onset_loss + 0.05 * pitch_loss
 
         return loss, onset_out, onset_y, onset_loss, pitch_loss
 
-    def resample(self, pred, y):
+    def resample(self, r_pred, r_y):
         #r_pred = pred.view(-1, pred.size(-1))
 
         if self.inbalance_ratio <= 0:
