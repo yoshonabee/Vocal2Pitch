@@ -17,16 +17,46 @@ from utils import get_make_result_args
 from tqdm import tqdm
 from multiprocessing import Pool
 
-def find_max_c(ts):
-    max_c = 0
-    max_t = 0
+from audiolazy.lazy_midi import freq2midi
 
-    for t, c in ts:
-        if c > max_c:
-            max_c = c
-            max_t = t
+def get_tonality(pitch_df):
+    pitches = (pitch_df['confidence'].values > 0.9).astype(np.int64) * pitch_df['frequency'].values
+    pitches = [p for p in pitches if p > 0]
+    pitches = np.array(list(map(freq2midi, pitches))).round().astype(np.int64)
 
-    return max_t
+    count = np.bincount(pitches)
+
+    li = [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1]
+
+    max_correct_chores = 0
+
+    for base in range(48, 60):
+        start_idx = base % 12
+
+        chores = np.zeros(count.shape)
+        for i in range(start_idx, chores.shape[0], 12):
+            chores[i:i + 12] = li[:chores[i:i + 12].shape[0]]
+
+        correct_chores = (chores * count).sum()
+        print(base, correct_chores)
+        if correct_chores > max_correct_chores:
+            max_correct_chores = correct_chores
+            correct_base = base
+
+    return correct_base
+
+def refine_pitch(pitch, tonality):
+    while tonality > pitch:
+        tonality -= 12
+
+    tones = np.array([0, 2, 4, 5, 7, 9, 11, 12]) + tonality
+
+    if math.ceil(pitch) in tones and math.floor(pitch) in tones:
+        return round(pitch)
+    elif math.ceil(pitch) in tones:
+        return math.ceil(pitch)
+    else:
+        return math.floor(pitch)
 
 def main(args):
 
@@ -88,7 +118,6 @@ def process_pitch_classical(pitch_list, start_idx, end_idx, freq2midi=False):
     final_pitch = pitch.dot(t - t.min()) / (t - t.min()).sum()
 
     if freq2midi:
-        from audiolazy.lazy_midi import freq2midi
 
         return round(freq2midi(final_pitch))
     return round(final_pitch)
@@ -126,10 +155,8 @@ def process_pitch_outlier_most(pitch_list, start_idx, end_idx, freq2midi=False):
             from audiolazy.lazy_midi import freq2midi
             pitch = np.array(list(map(freq2midi, pitch)))
         
-        counts = np.bincount(pitch.round().astype(np.int64))
+        counts = np.bincount([refine_pitch(p) for p in pitch])
         final_pitch = int(np.argmax(counts))
-        if counts[final_pitch] < 3:
-            final_pitch = 0
     except:
         final_pitch = 0
 
@@ -157,25 +184,6 @@ def get_segments(times, preds, onset_thres=None, normalize=False):
 
         preds = (preds - mean) / std
         preds = (preds - preds.min()) / (preds.max() - preds.min())
-
-    # p_counts = np.bincount((preds * 1000).astype(np.int64))
-    # count_thres = args.onset_thres * preds.shape[0]
-
-    # for onset_thres in range(p_counts.shape[0]):
-    #     if p_counts[:onset_thres].sum() >= count_thres:
-    #         break
-
-    # onset_thres /= 1000
-
-    # p_counts = np.bincount((preds * 1000).astype(np.int64))
-    # count_thres = args.onset_thres
-
-
-    # for onset_thres in range(p_counts.shape[0]):
-    #     if p_counts[onset_thres] < count_thres:
-    #         break
-
-    # onset_thres /= 1000
 
     if onset_thres is None:
         onset_thres = 0.08
@@ -216,31 +224,6 @@ def get_segments(times, preds, onset_thres=None, normalize=False):
                 ts = []
 
     return segments
-
-def get_segments_conv(times, preds):
-    frame_width = 5
-    half_length = int((frame_width - 1) / 2)
-    kernel = np.zeros(frame_width).float()
-    kernel[0] = -1
-    kernel[-1] = -1
-    kernel[half_length] == 2
-
-    new_times = []
-    scores = []
-
-    for i in range(preds.shape[0]):
-        if i - half_length < 0 or i + half_length >= preds.shape[0]:
-            continue
-
-        new_times.append(times[i])
-        frame = preds[i - half_length:i + half_length + 1]
-
-        frame = (frame - frame.mean()) / frame.std()
-        score = frame * kernel
-
-        scores.append(score)
-
-    return new_times, scores
 
 def process_audio(inputs):
     name, pred, audio_dir, alpha, crepe_confidence_thres, min_pitch, max_pitch = inputs
