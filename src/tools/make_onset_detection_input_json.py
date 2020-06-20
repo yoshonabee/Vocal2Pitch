@@ -28,12 +28,13 @@ def main(args: dict) -> None:
     ]
 
     random.shuffle(audio_list)
+
     if args.test:
         json.dump(audio_list, (output_dir / "test.json").open('w'))
     else:
         val_audio_list = audio_list[:args.val_set_size]
         train_audio_list = audio_list[args.val_set_size:]
-   
+
         json.dump(train_audio_list, (output_dir / "train.json").open("w"))
         json.dump(val_audio_list, (output_dir / "val.json").open("w"))
 

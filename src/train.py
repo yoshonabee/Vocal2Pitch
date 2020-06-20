@@ -7,15 +7,17 @@ from torch.optim import Adam
 
 from utils import get_general_args, get_data_args, get_model_args, get_training_args, set_seed
 from data import Dataset
-from model import CNN
+from model import CNN_Transformer
 from criterion import ResampleCriterion
 
 from pytorch_trainer import Trainer
 from pytorch_trainer.metrics import Accuracy, Precision, Recall, F1
 
+torch.set_num_threads(4)
+
 def main(args):
     if args.task == "onset_offset_detection":
-        model = CNN(model_config=args.model_config)
+        model = CNN()
         print(model)
 
         optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
@@ -27,11 +29,12 @@ def main(args):
 
         val_dataset = Dataset(
             args.val_json,
-            feature_config=args.feature_config
+            sr=args.sr,
+            augment=False
         )
 
-        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
-        val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
+        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True)
+        val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False)
 
         trainer = Trainer(
             model,
@@ -39,7 +42,7 @@ def main(args):
             val_dataloader,
             device=torch.device(args.device),
             loss_fn=ResampleCriterion(args.inbalance_ratio, args.criterion),
-            metrics=[Accuracy(True), Precision(True), Recall(True), F1(True)],
+            metrics=[Accuracy(args.criterion == "bceloss"), Precision(args.criterion == "bceloss"), Recall(args.criterion == "bceloss"), F1(args.criterion == "bceloss")],
             lr=args.lr,
             optimizer=optimizer,
             epochs=args.epochs,

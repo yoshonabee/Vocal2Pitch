@@ -14,6 +14,8 @@ from utils import get_evaluating_args
 from tqdm import tqdm
 
 def main(args):
+    setattr(args, 'data_dir', "../data/MIR-ST500/" if "val" in args.predict_json else "../data/AIcup_testset_ok/")
+
     predict_json = json.load(open(args.predict_json))
 
     data_dir = Path(args.data_dir)
@@ -26,6 +28,7 @@ def main(args):
         for name in predict_json:
             if len(predict_json[name]) == 0:
                 continue
+
             pred = np.array(predict_json[name])
             gt_path = data_dir / name / f"{name}_groundtruth.txt"
 
@@ -40,7 +43,7 @@ def main(args):
             total_COnPOff += conpoff
 
             t.update(1)
-    
+
     print(f"total audios: {len(predict_json)}")
     print(f"COn: {total_COn / len(predict_json)}")
     print(f"COnP: {total_COnP / len(predict_json)}")

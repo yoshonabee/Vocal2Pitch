@@ -25,7 +25,7 @@ class ResampleCriterion(DefaultCriterion):
         resampled_pred, resampled_y = self.resample(pred, y)
         loss = self.criterion(resampled_pred, resampled_y)
 
-        return loss, pred, y
+        return loss, resampled_pred, resampled_y
 
     def resample(self, pred, y):
         r_pred = pred.view(-1)

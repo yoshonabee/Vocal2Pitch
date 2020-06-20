@@ -40,7 +40,7 @@ def main(args):
     audio_list = [
         (
             audio_dir / f"vocals.wav",
-            audio_dir / f"vocal.wav",
+            audio_dir / f"vocals-16k.wav",
             args.sample_rate
         ) 
         for audio_dir in data_dir.glob("*")
@@ -48,8 +48,8 @@ def main(args):
         # for audio in audio_dir.glob(f"{audio_dir.name}.*")
         # for audio in audio_dir.glob(f"{audio_dir.name}.*")
         # if audio_dir.name.isdigit() and audio.suffix.strip('.') in ("wav", "m4a", "aac", "mp3")
+        if (audio_dir / "vocals.wav").exists()
     ]
-
     print(len(audio_list))
 
     p = Pool(args.concurrency)

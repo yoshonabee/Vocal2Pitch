@@ -4,9 +4,10 @@
 *.mp4
 *.pkl
 *.obj
+*.json
 
+runs
 *__pycache__
 *ipython_checkpoints
 
-data/
-*runs/
+data

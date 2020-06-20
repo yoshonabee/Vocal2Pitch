@@ -1,5 +1,4 @@
 import json
-from collections import defaultdict
 import torchaudio
 from pathlib import Path
 import pandas as pd
@@ -11,6 +10,7 @@ import torch
 from tqdm import tqdm
 
 class EvalDataset(torch.utils.data.Dataset):
+
     def __init__(self, audio_dir):
         self.audio_dir = Path(audio_dir)
 

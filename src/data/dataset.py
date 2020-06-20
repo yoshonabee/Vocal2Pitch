@@ -1,25 +1,33 @@
 import json
+import math
 import random
-import torchaudio
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
-from .utils import get_onset_list, make_target_tensor
-
-import torch
-
 from tqdm import tqdm
 
-from IPython import embed
-from time import sleep
-import math
+import torch
+import torchaudio
+
+from .utils import get_onset_list, make_target_tensor
+
+
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, data_json, feature_config):
         self.data_json = Path(data_json)
-        self.feature_config = Path(feature_config)
-        # self.model_down_sampling_rate = model_down_sampling_rate
+
+    def __init__(self, data_json, thres, target_length, segment_length=4, sr=16000, data_amount=5, augment=True):
+        self.data_json = Path(data_json)
+        self.thres = thres
+        self.target_length = target_length
+        self.sr = sr
+        self.segment_length = segment_length
+        self.segment_frame = sr * segment_length
+        self.augment = augment
+        self.data_amount = data_amount
 
         self.frame_hop = 1
         self.frame_width = 31
@@ -38,29 +46,8 @@ class Dataset(torch.utils.data.Dataset):
         for name, item in config.items():
             setattr(self, name, item)
 
-    # def _get_target_frame(self):
-    #     if self.domain == "time":
-    #         return int(self.sr * self.segment_length / self.model_down_sampling_rate)
-    #     else:
-    #         return int(((self.sr * self.segment_length) / self.hop_length + 1) // self.model_down_sampling_rate)
-
     def _get_transform(self):
         return torchaudio.transforms.MelSpectrogram(44100, 2048, hop_length=512, f_min=27.5, f_max=16000, n_mels=120).cuda()
-        if self.domain == "time":
-            return lambda x: x
-        elif self.domain == "spectrogram":
-            return torchaudio.transforms.Spectrogram(self.n_fft, self.win_length, self.hop_length, normalized=self.normalized)
-        elif self.domain == "mfcc":
-            return torchaudio.transforms.MFCC(
-                sample_rate=self.sr,
-                n_mfcc=self.n_mfcc,
-                log_mels=self.log_mels,
-                melkwargs={
-                    "n_fft": self.n_fft,
-                    "win_length":self.win_length,
-                    "hop_length":self.hop_length
-                }
-            )
 
     def _load_data(self):
         self.data = []
@@ -78,6 +65,7 @@ class Dataset(torch.utils.data.Dataset):
                 t.set_description(audio_dir.name)
 
                 audio_path = audio_dir / f"vocals.wav"
+
                 label_path = audio_dir / f"{audio_dir.name}_groundtruth.txt"
 
                 audio, _ = torchaudio.load(str(audio_path))
@@ -96,38 +84,6 @@ class Dataset(torch.utils.data.Dataset):
                 
                 #if i == 5:
                 #    break
-
-        with torch.no_grad():
-            mean = torch.zeros(120).float().cuda()
-            std = torch.zeros(120).float().cuda()
-            total = 0
-            for i in range(len(self.data)):
-                mean += self.data[i].cuda().mean(1) * self.data[i].size(1)
-                std += self.data[i].cuda().std(1) * self.data[i].size(1)
-                total += self.data[i].size(1)
-
-            mean = (mean / total).unsqueeze(1)
-            std = (std / total).unsqueeze(1)
-
-            for i in range(len(self.data)):
-                self.data[i] = ((self.data[i].cuda() - mean) / std).cpu()
-
-            # self.index = sorted(self.index, key=lambda x: -x[-1])
-
-            # for i in range(len(self.index)):
-            #     if self.index[i][-1] == 0:
-            #         break
-
-            
-            # embed()
-
-            # if i * 2 < len(self.index):
-            #    self.max_index = i * 2
-            #else:
-            #    self.max_index = len(self.index)
-
-
-                
 
     def __getitem__(self, index):
         audio_id, start, end, target = self.index[index]

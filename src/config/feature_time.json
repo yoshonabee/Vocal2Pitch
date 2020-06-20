@@ -1,6 +1,0 @@
-{
-	"domain": "time",
-	"sr": 16000,
-	"segment_length": 4,
-	"thres": 0.3
-}
