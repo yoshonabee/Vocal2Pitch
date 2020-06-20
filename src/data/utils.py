@@ -1,4 +1,5 @@
 import torch
+from audiolazy.lazy_midi import freq2midi
 
 def get_onset_list(df, thres):
     result = [df['start'][0]]
@@ -36,3 +37,4 @@ def make_target_tensor(onset_list, start_time, time_length, length):
         tensor[frame] = 1
 
     return tensor
+

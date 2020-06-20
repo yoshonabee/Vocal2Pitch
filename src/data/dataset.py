@@ -13,21 +13,9 @@ import torchaudio
 
 from .utils import get_onset_list, make_target_tensor
 
-
-
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, data_json, feature_config):
+    def __init__(self, data_json):
         self.data_json = Path(data_json)
-
-    def __init__(self, data_json, thres, target_length, segment_length=4, sr=16000, data_amount=5, augment=True):
-        self.data_json = Path(data_json)
-        self.thres = thres
-        self.target_length = target_length
-        self.sr = sr
-        self.segment_length = segment_length
-        self.segment_frame = sr * segment_length
-        self.augment = augment
-        self.data_amount = data_amount
 
         self.frame_hop = 1
         self.frame_width = 31
@@ -36,26 +24,15 @@ class Dataset(torch.utils.data.Dataset):
 
         self.data = []
 
-        self._parse_feature_config()
         self.transform = self._get_transform()
         self._load_data()
 
-    def _parse_feature_config(self):
-        config = json.load(open(self.feature_config))
-
-        for name, item in config.items():
-            setattr(self, name, item)
-
     def _get_transform(self):
-        return torchaudio.transforms.MelSpectrogram(44100, 2048, hop_length=512, f_min=27.5, f_max=16000, n_mels=120).cuda()
+        return torchaudio.transforms.MelSpectrogram(44100, 2048, hop_length=512, f_min=27.5, f_max=16000, n_mels=80).cuda()
 
     def _load_data(self):
         self.data = []
         self.index = []
-
-        segment_frame = self.sr * self.segment_length
-        # target_frame = self._get_target_frame()
-        # target_frame = 86
 
         with tqdm(json.load(open(self.data_json)), unit="audio") as t:
 
