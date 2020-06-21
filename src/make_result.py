@@ -17,16 +17,7 @@ from tqdm import tqdm
 
 from multiprocessing import Pool
 
-def find_max_c(ts):
-    max_c = 0
-    max_t = 0
-
-    for t, c in ts:
-        if c > max_c:
-            max_c = c
-            max_t = t
-
-    return max_t
+from audiolazy.lazy_midi import freq2midi
 
 def main(args):
 
@@ -140,7 +131,6 @@ def process_pitch_outlier_mid(pitch_list, start_idx, end_idx, freq2midi=False):
 
     try:
         if freq2midi:
-            from audiolazy.lazy_midi import freq2midi
             pitch = np.array(list(map(freq2midi, pitch)))
             
         final_pitch = int(np.median(pitch).round())
@@ -247,6 +237,29 @@ def process_audio(inputs):
 
         if final_pitch >= min_pitch and final_pitch <= max_pitch:
             result.append([onset, offset, final_pitch])
+
+    i = 0
+    while i + 1 < len(result):
+        if abs(result[i + 1][2] - result[i][2]) <= 1 and result[i + 1][0] - result[i][1] <= 0.033:
+            if (raw_pitch_list['confidence'][int(result[i][1] / 0.01)] >= 0.5):
+                result[i][1] = result[i + 1][1]
+                if abs(result[i + 1][2] - result[i][2]) == 1:
+                    on = result[i][0]
+                    of = result[i][1]
+
+                    p = [p for p in pitch_list[int((on + (of - on) * alpha) / 0.01):int(of / 0.01), 1] if p > 0]
+                    p = np.array(list(map(freq2midi, p)))
+                    p = np.bincount(p.round().astype(np.int64))
+                    p = int(np.argmax(p))
+                    result[i][2] = p
+                del result[i + 1]
+                continue
+
+        if result[i + 1][0] - result[i][1] <= 0.2:
+            result[i][1] = result[i + 1][0] - 5e-2
+        
+        i += 1
+
 
     return name, result
 
