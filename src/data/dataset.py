@@ -18,17 +18,14 @@ class Dataset(torch.utils.data.Dataset):
         self.data_json = Path(data_json)
 
         self.frame_hop = 1
-        self.frame_width = 31
+        self.frame_width = 15
 
         assert self.frame_hop % 2 == 1
 
         self.data = []
 
-        self.transform = self._get_transform()
+        self.transform = Transform().cuda()
         self._load_data()
-
-    def _get_transform(self):
-        return torchaudio.transforms.MelSpectrogram(44100, 2048, hop_length=512, f_min=27.5, f_max=16000, n_mels=80).cuda()
 
     def _load_data(self):
         self.data = []
@@ -49,10 +46,11 @@ class Dataset(torch.utils.data.Dataset):
                 label = pd.read_csv(label_path, sep=" ", header=None, names=["start", "end", "pitch"])
                 onset_list = get_onset_list(label, 0.032)
                 
-                audio = audio.sum(0).view(-1)
+                audio = audio.mean(0).view(-1)
                 audio_length = audio.size(0) / 44100
 
-                spectrogram = self.transform(audio.cuda()).detach().cpu()
+                with torch.no_grad():
+                    spectrogram = self.transform(audio.cuda()).cpu()
 
                 self.data.append(spectrogram)
 
@@ -88,17 +86,18 @@ class Dataset(torch.utils.data.Dataset):
             end_idx = (self.frame_width // 2) + 3 * self.frame_hop
 
             if onset_list[onset_idx] >= frame_times[end_idx] or onset_list[onset_idx] < frame_times[start_idx]:
-                target = 0
+                target = -1
             else:
                 for j in range(start_idx, end_idx):
                     if onset_list[onset_idx] >= frame_times[j] and onset_list[onset_idx] < frame_times[j + 1]:
                         if j == self.frame_width // 2:
                             target = 1
                         elif j == self.frame_width // 2 - self.frame_hop or j == self.frame_width // 2 + self.frame_hop:
-                            target = 0.6
-                        elif j == self.frame_width // 2 - 2 * self.frame_hop or j == self.frame_width // 2 + 2 * self.frame_hop:
                             target = 0.2
-                        else: target = 0
+                        elif j == self.frame_width // 2 - 2 * self.frame_hop or j == self.frame_width // 2 + 2 * self.frame_hop:
+                            target = -0.6
+                        else:
+                            target = -1
 
                         break
 
@@ -106,3 +105,22 @@ class Dataset(torch.utils.data.Dataset):
             frame_times += frame_width * self.frame_hop
 
         return result
+
+class Transform(torch.nn.Module):
+    def __init__(self):
+        self.melspectrogram = torchaudio.transforms.MelSpectrogram(
+            44100,
+            2048,
+            hop_length=512,
+            f_min=27.5,
+            f_max=16000,
+            n_mels=80
+        )
+
+    def forward(self, x):
+        x = self.melspectrogram(x)
+        x = x.log()
+        x = (x - x.mean(1)) / x.std(1)
+
+        return x
+

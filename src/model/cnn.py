@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import json
 
 class CNN(nn.Module):
-    def __init__(self, in_channel=None, output_dim=None, model_config=None):
+    def __init__(self):
         super(CNN, self).__init__()
 
         layers = [
@@ -42,7 +42,7 @@ class CNN(nn.Module):
             nn.Linear(16560, 256),
             nn.ReLU(),
             nn.Linear(256, 1),
-            nn.Sigmoid()
+            nn.tanh()
         )
     
     def forward(self, x):
@@ -52,4 +52,5 @@ class CNN(nn.Module):
             x = x + layer(x)
         x = self.before_out(x)
         x = x.view(x.size(0), -1)
+        print(x.size())
         return self.out(x)

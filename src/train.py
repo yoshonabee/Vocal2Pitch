@@ -22,16 +22,9 @@ def main(args):
 
         optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
-        train_dataset = Dataset(
-            args.train_json,
-            feature_config=args.feature_config
-        )
+        train_dataset = Dataset(args.train_json)
 
-        val_dataset = Dataset(
-            args.val_json,
-            sr=args.sr,
-            augment=False
-        )
+        val_dataset = Dataset(args.val_json)
 
         train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True)
         val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False)
@@ -42,7 +35,7 @@ def main(args):
             val_dataloader,
             device=torch.device(args.device),
             loss_fn=ResampleCriterion(args.inbalance_ratio, args.criterion),
-            metrics=[Accuracy(args.criterion == "bceloss"), Precision(args.criterion == "bceloss"), Recall(args.criterion == "bceloss"), F1(args.criterion == "bceloss")],
+            metrics=[Accuracy(args.criterion in ("bceloss", "l1loss", "mseloss")), Precision(args.criterion in ("bceloss", "l1loss", "mseloss")), Recall(args.criterion in ("bceloss", "l1loss", "mseloss")), F1(args.criterion in ("bceloss", "l1loss", "mseloss"))],
             lr=args.lr,
             optimizer=optimizer,
             epochs=args.epochs,

@@ -8,7 +8,9 @@ from pytorch_trainer.criterion import DefaultCriterion
 class ResampleCriterion(DefaultCriterion):
     CRITERIONS = {
         "crossentropy": nn.CrossEntropyLoss,
-        'bceloss': nn.BCELoss
+        'bceloss': nn.BCELoss,
+        'l1loss': nn.L1Loss,
+        'mseloss': nn.MSELoss
     }
 
     def __init__(self, inbalance_ratio, *args, **kwargs):
